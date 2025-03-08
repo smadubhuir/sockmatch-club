@@ -1,5 +1,6 @@
+"use client"; 
+import React from "React";
 import Link from "next/link";
-
 export default function Navbar() {
   return (
     <nav className="bg-gray-200 p-4 border-b border-black">

@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -22,11 +23,9 @@ export default function BrowseSocksPage() {
   return (
     <div className="flex flex-col items-center p-10 space-y-8 text-center font-sans text-black bg-gray-100">
       <nav className="absolute top-4 left-4">
-      <Link href="/" className="border border-black p-2 bg-gray-200">
-  ⬅ Back to Home
-</Link>
+        <Link href="/" className="border border-black p-2 bg-gray-200">⬅ Back to Home</Link>
       </nav>
-
+      
       <h1 className="text-4xl font-bold underline">Browse Socks</h1>
       <p className="text-md max-w-2xl">
         Explore available socks and find your perfect match!
@@ -66,4 +65,3 @@ export default function BrowseSocksPage() {
     </div>
   );
 }
-

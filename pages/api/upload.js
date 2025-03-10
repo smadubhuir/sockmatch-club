@@ -1,43 +1,56 @@
-import formidable from "formidable";
-import fs from "fs";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../../lib/firebase";  // Import Firebase from our config
-import { collection, addDoc } from "firebase/firestore";
+import { IncomingForm } from "formidable";
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs"; // Needed for reading file paths
 
 export const config = { api: { bodyParser: false } };
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: "dilhl61st",
+  api_key: "369811978667215",
+  api_secret: "bX0nw-F2j_Yj0HdzWF3zXwq-MQM", // Ensure this is correct!
+});
+
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-  const form = new formidable.IncomingForm();
+  const form = new IncomingForm();
+
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: "Form parsing failed" });
+    if (err) {
+      console.error("Formidable Parse Error:", err);
+      return res.status(500).json({ error: "Form parsing failed" });
+    }
 
-    const { name, price, color, pattern, description } = fields;
-    const image = files.image;
+    console.log("Parsed Form Fields:", fields);
+    console.log("Parsed Form Files:", files);
 
-    if (!image) return res.status(400).json({ error: "No image provided" });
+    const file = files.image?.[0] || files.image; // Handle both array and object cases
+
+    if (!file) {
+      console.error("No image found in request.");
+      return res.status(400).json({ error: "No image provided" });
+    }
+
+    console.log("Uploading file from path:", file.filepath || file.path);
 
     try {
-      // Read file buffer
-      const fileBuffer = await fs.promises.readFile(image.filepath);
+      const filePath = file.filepath || file.path; // Ensure correct file reference
+      if (!filePath) throw new Error("Invalid file path");
 
-      // Upload image to Firebase Storage
-      const storageRef = ref(storage, `socks/${image.originalFilename}`);
-      await uploadBytes(storageRef, fileBuffer);
-
-      // Get image URL from Firebase Storage
-      const imageUrl = await getDownloadURL(storageRef);
-
-      // Save sock data to Firestore
-      await addDoc(collection(db, "socks"), {
-        name, price, color, pattern, description, imageUrl,
-        createdAt: new Date(),
+      // Upload image to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(filePath, {
+        folder: "sockmatch",
+        use_filename: true,
+        unique_filename: false,
+        resource_type: "image",
       });
 
-      res.status(200).json({ message: "Sock uploaded!", imageUrl });
+      res.status(200).json({ message: "Sock uploaded!", imageUrl: uploadResult.secure_url });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Cloudinary Upload Error:", error);
       res.status(500).json({ error: "Upload failed" });
     }
   });

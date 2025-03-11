@@ -1,57 +1,56 @@
 import { IncomingForm } from "formidable";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs"; // Needed for reading file paths
+import fs from "fs";
 
 export const config = { api: { bodyParser: false } };
 
-// Configure Cloudinary
 cloudinary.config({
-  cloud_name: "dilhl61st",
-  api_key: "369811978667215",
-  api_secret: "bX0nw-F2j_Yj0HdzWF3zXwq-MQM", // Ensure this is correct!
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const form = new IncomingForm();
+  const form = new IncomingForm({ multiples: false });
 
   form.parse(req, async (err, fields, files) => {
+    console.log("Fields:", fields);
+    console.log("Files:", files);
+
     if (err) {
-      console.error("Formidable Parse Error:", err);
-      return res.status(500).json({ error: "Form parsing failed" });
+      console.error("Formidable Error:", err);
+      return res.status(500).json({ error: "File upload error" });
     }
 
-    console.log("Parsed Form Fields:", fields);
-    console.log("Parsed Form Files:", files);
-
-    const file = files.image?.[0] || files.image; // Handle both array and object cases
-
-    if (!file) {
-      console.error("No image found in request.");
+    if (!files.image || files.image.length === 0) {
+      console.log("No image received in request.");
       return res.status(400).json({ error: "No image provided" });
     }
 
-    console.log("Uploading file from path:", file.filepath || file.path);
+    // ✅ Extract the first file object correctly
+    const file = files.image[0];
+    const filePath = file.filepath;
+
+    console.log("Processing file at:", filePath);
 
     try {
-      const filePath = file.filepath || file.path; // Ensure correct file reference
-      if (!filePath) throw new Error("Invalid file path");
+      // ✅ Upload file to Cloudinary
+      const uploadedImage = await cloudinary.uploader.upload(filePath, {
+  folder: "sockmatch",
+  width: 800, // Reduce resolution
+  quality: "auto", // Let Cloudinary optimize
+  fetch_format: "auto", // Convert to efficient format
+});
 
-      // Upload image to Cloudinary
-      const uploadResult = await cloudinary.uploader.upload(filePath, {
-        folder: "sockmatch",
-        use_filename: true,
-        unique_filename: false,
-        resource_type: "image",
-      });
-
-      res.status(200).json({ message: "Sock uploaded!", imageUrl: uploadResult.secure_url });
+      console.log("Upload successful:", uploadedImage.secure_url);
+      return res.status(200).json({ imageUrl: uploadedImage.secure_url });
     } catch (error) {
       console.error("Cloudinary Upload Error:", error);
-      res.status(500).json({ error: "Upload failed" });
+      return res.status(500).json({ error: "Failed to upload to Cloudinary", details: error.message });
     }
   });
 }

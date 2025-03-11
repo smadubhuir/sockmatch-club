@@ -1,3 +1,38 @@
+# Ignore Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+sockmatch-venv/
+
+# Ignore Jupyter Notebook checkpoints (if using Jupyter)
+.ipynb_checkpoints/
+
+# Ignore environment variables and config files
+.env
+*.env
+
+# Ignore log files
+*.log
+
+# Ignore compiled C files
+*.so
+*.dylib
+*.dll
+*.o
+*.a
+
+# Ignore large machine learning/AI libraries
+sockmatch-venv/lib/python*/site-packages/clang/
+sockmatch-venv/lib/python*/site-packages/tensorflow/
+sockmatch-venv/lib/python*/site-packages/cv2/
+sockmatch-venv/lib/python*/site-packages/numpy/
+
+# Ignore Git Large File Storage (LFS) tracked files
+.gitattributes
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies

@@ -59,7 +59,8 @@ export default function HomePage() {
                 <img 
                   src={sock.imageUrl} 
                   alt="Sock" 
-                  className="w-40 h-40 object-contain rounded-md mb-2 border border-green-500"
+                  className="w-40 h-40 object-contain rounded-md m
+                  b-2 border border-green-500"
                 />
                 <p className="text-sm text-gray-700 text-center w-full break-words">
                   {sock.name || "Unnamed Sock"}

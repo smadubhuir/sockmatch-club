@@ -89,13 +89,6 @@ saveEmbedding(uploadedImage.secure_url, embedding);
 console.log("Upload successful:", uploadedImage.secure_url);
 return res.status(200).json({ imageUrl: uploadedImage.secure_url });
 
-      const uploadedImage = await cloudinary.uploader.upload(filePath, {
-  folder: "sockmatch",
-  width: 800, // Reduce resolution
-  quality: "auto", // Let Cloudinary optimize
-  fetch_format: "auto", // Convert to efficient format
-});
-
       console.log("Upload successful:", uploadedImage.secure_url);
       return res.status(200).json({ imageUrl: uploadedImage.secure_url });
     } catch (error) {

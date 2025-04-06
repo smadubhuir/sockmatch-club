@@ -27,6 +27,7 @@ export default function AuthButton() {
   );
 }
  s
+
 export default function Navbar() {
   return (
     <nav className="bg-gray-200 p-4 border-b border-black">

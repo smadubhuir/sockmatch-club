@@ -1,7 +1,6 @@
 import { IncomingForm } from "formidable";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import * as tf from "@tensorflow/tfjs-node";
 import path from "path";
 
 export const config = { api: { bodyParser: false } };

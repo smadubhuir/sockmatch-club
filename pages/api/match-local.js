@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import * as tf from "@tensorflow/tfjs-node";
 import axios from "axios";
 
 const embeddingsFilePath = path.join(process.cwd(), "data", "sock_embeddings.json");

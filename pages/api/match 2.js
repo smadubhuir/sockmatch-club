@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
+<<<<<<< HEAD
+=======
+import tf from '@tensorflow/tfjs-node';
+>>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 import cosineSimilarity from '../../utils/cosineSimilarity';
 
 const embeddingsFilePath = path.join(process.cwd(), 'data', 'sock_embeddings.json');

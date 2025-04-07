@@ -27,7 +27,10 @@ export default function AuthButton() {
   );
 }
  s
+<<<<<<< HEAD
 
+=======
+>>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 export default function Navbar() {
   return (
     <nav className="bg-gray-200 p-4 border-b border-black">

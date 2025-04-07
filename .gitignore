@@ -115,6 +115,7 @@ yarn-error.log*
 next-env.d.ts
 
 sockmatch-venv/
+<<<<<<< HEAD
 # Ignore Python virtual environments
 venv/
 
@@ -132,4 +133,6 @@ __pycache__/
 
 # Ignore large library binaries
 >>>>>>> recovery-branch
+=======
+>>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 *.dylib

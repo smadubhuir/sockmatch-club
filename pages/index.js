@@ -39,7 +39,7 @@ export default function HomePage() {
       </p>
 
       {/* Get Started Button */}
-      <Link href="/upload">
+      <Link href="/upload-form">
         <button className="border border-black bg-blue-500 text-white px-6 py-2 text-md font-bold uppercase hover:bg-blue-600 transition">
           Get Started
         </button>

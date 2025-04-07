@@ -8,9 +8,10 @@ let mobilenetModel;
 
 async function loadMobilenet() {
   if (!mobilenetModel) {
-    mobilenetModel = await tf.loadGraphModel(
-      "https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v2_1.0_224/model.json"
-    );
+    await tf.loadGraphModel(
+  "https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v2_100_224/classification/4/default/1",
+  { fromTFHub: true }
+)
   }
   return mobilenetModel;
 }

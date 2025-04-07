@@ -4,12 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 export default NextAuth({
   providers: [
     CredentialsProvider({
-import Providers from "next-auth/providers";
-
-export default NextAuth({
-  providers: [
-    Providers.Credentials({
-      name: "Email",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "example@mail.com" },
         password: { label: "Password", type: "password" },

@@ -10,8 +10,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
     "@tensorflow/tfjs": "^4.22.0",
-    "axios": "^1.8.2",
+    "axios": "^1.8.4",
     "cloudinary": "^2.5.1",
     "formidable": "^3.5.2",
     "next": "^15.2.1",

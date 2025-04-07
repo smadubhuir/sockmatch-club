@@ -1,11 +1,9 @@
-<<<<<<< HEAD
 const fs = require("fs");
 const path = require("path");
 
 const embeddingsFilePath = path.join(process.cwd(), "data", "sock_embeddings.json");
 
 // Simple cosine similarity function
-=======
 import fs from "fs";
 import path from "path";
 import * as tf from "@tensorflow/tfjs-node";
@@ -14,14 +12,12 @@ import axios from "axios";
 const embeddingsFilePath = path.join(process.cwd(), "data/sock_embeddings.json");
 
 // Cosine similarity between two vectors
->>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
+e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dotProduct / (magnitudeA * magnitudeB);
-<<<<<<< HEAD
-=======
 }
 
 // Load and cache MobileNet model
@@ -51,7 +47,7 @@ async function getEmbeddingFromUrl(imageUrl) {
   const embeddingArray = await flattened.array();
   tf.dispose([imageTensor, embedding, flattened]);
   return embeddingArray;
->>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
+e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 }
 
 export default async function handler(req, res) {
@@ -59,7 +55,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-<<<<<<< HEAD
   try {
     const { embedding, threshold = 0.7 } = req.body;
 
@@ -83,7 +78,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Error processing match request:", error);
     res.status(500).json({ error: "Internal Server Error" });
-=======
+
   const { imageUrl } = req.body;
 
   if (!imageUrl) {
@@ -116,6 +111,6 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("Error processing match request:", err);
     return res.status(500).json({ error: "Internal Server Error", details: err.message });
->>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
+e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
   }
 }

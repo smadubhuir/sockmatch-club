@@ -9,7 +9,6 @@ import Providers from "next-auth/providers";
 export default NextAuth({
   providers: [
     Providers.Credentials({
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
       name: "Email",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "example@mail.com" },

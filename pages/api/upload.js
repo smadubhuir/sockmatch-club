@@ -5,8 +5,6 @@ import path from "path";
 import * as tf from "@tensorflow/tfjs-node";
 import path from "path";
 
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
-
 export const config = { api: { bodyParser: false } };
 
 cloudinary.config({
@@ -50,10 +48,7 @@ function saveEmbedding(imageUrl, embedding) {
     console.log("⚠️ Duplicate image — embedding already exists, not saving again.");
   }
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
@@ -98,7 +93,6 @@ return res.status(200).json({ imageUrl: uploadedImage.secure_url });
 
       console.log("Upload successful:", uploadedImage.secure_url);
       return res.status(200).json({ imageUrl: uploadedImage.secure_url });
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
     } catch (error) {
       console.error("Cloudinary Upload Error:", error);
       return res.status(500).json({ error: "Failed to upload to Cloudinary", details: error.message });

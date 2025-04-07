@@ -12,7 +12,6 @@ import axios from "axios";
 const embeddingsFilePath = path.join(process.cwd(), "data/sock_embeddings.json");
 
 // Cosine similarity between two vectors
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -47,7 +46,6 @@ async function getEmbeddingFromUrl(imageUrl) {
   const embeddingArray = await flattened.array();
   tf.dispose([imageTensor, embedding, flattened]);
   return embeddingArray;
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
 }
 
 export default async function handler(req, res) {
@@ -111,6 +109,5 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("Error processing match request:", err);
     return res.status(500).json({ error: "Internal Server Error", details: err.message });
-e945e55 (Add embedding generation to upload.js, prevent duplicates in sock_embeddings.json)
   }
 }

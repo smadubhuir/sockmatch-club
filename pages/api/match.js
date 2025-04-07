@@ -1,10 +1,38 @@
 import { supabase } from "../../lib/supabaseAdmin";
+import * as tf from "@tensorflow/tfjs";
+import * as mobilenet from "@tensorflow-models/mobilenet";
 
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
   return dotProduct / (magnitudeA * magnitudeB);
+}
+
+let model;
+async function loadMobilenet() {
+  if (!model) {
+    model = await mobilenet.load();
+  }
+  return model;
+}
+
+export async function getEmbeddingFromFile(file) {
+  const imageBitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = 224;
+  canvas.height = 224;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(imageBitmap, 0, 0, 224, 224);
+
+  const imageTensor = tf.browser.fromPixels(canvas);
+
+  const model = await loadMobilenet();
+  const embedding = model.infer(imageTensor.expandDims(0), true);
+  const array = await embedding.flatten().array();
+
+  tf.dispose([imageTensor, embedding]);
+  return array;
 }
 
 export default async function handler(req, res) {

@@ -137,10 +137,11 @@ export default function MatchSock() {
               <h2 className="text-lg font-bold mt-6 border-t pt-4">Suggested Socks</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-4">
                 {fallbackMatches.map((sock, index) => (
+                  console.log("Match:", match);
                   <div key={index} className="p-4 border rounded-md text-center shadow-md">
                     <img src={sock.imageUrl} alt={`Sock ${index + 1}`} className="w-32 mx-auto rounded-md shadow-md" />
                     <p className="text-sm mt-2 font-bold">Potential Match!</p>
-                    <p className="text-gray-600 text-xs">SockRank: {(sock.similarity * 100).toFixed(2)}%</p>
+                    <p className="text-gray-600 text-xs italic">No SockRank — just vibes.</p>
                   </div>
                 ))}
               </div>

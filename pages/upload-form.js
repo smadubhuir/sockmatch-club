@@ -1,61 +1,90 @@
+// Updated /pages/upload-form.js
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
+import * as tf from "@tensorflow/tfjs";
+import * as mobilenet from "@tensorflow-models/mobilenet";
+import axios from "axios";
 
-export default function UploadForm() {
+let model;
+async function loadMobilenet() {
+  if (!model) {
+    model = await mobilenet.load();
+  }
+  return model;
+}
+
+async function getEmbeddingFromFile(file) {
+  const imageBitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = 224;
+  canvas.height = 224;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(imageBitmap, 0, 0, 224, 224);
+
+  const imageTensor = tf.browser.fromPixels(canvas);
+  const model = await loadMobilenet();
+  const embedding = model.infer(imageTensor.expandDims(0), true);
+  const array = await embedding.flatten().array();
+
+  tf.dispose([imageTensor, embedding]);
+  return array;
+}
+
+export default function UploadPage() {
   const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleUpload = async () => {
     if (!file) return;
-    setUploading(true);
-    setError(null);
-
-    const formData = new FormData();
-    formData.append("image", file);
+    setLoading(true);
 
     try {
-      const res = await fetch("/api/upload", {
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append("image", file);
+      const uploadRes = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
+      const { imageUrl } = await uploadRes.json();
 
-      const data = await res.json();
+      // Generate embedding
+      const embedding = await getEmbeddingFromFile(file);
 
-      if (res.ok) {
-        router.push(`/upload?imageUrl=${encodeURIComponent(data.imageUrl)}`);
-      } else {
-        setError(data.error || "Upload failed");
-      }
+      // Save to Supabase
+      await axios.post("/api/save-sock", {
+        imageUrl,
+        embedding,
+      });
+
+      // Route to results page with image URL
+      router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
     } catch (err) {
-      console.error(err);
-      setError("Upload error");
+      console.error("Upload error:", err);
+      alert("Upload failed.");
     } finally {
-      setUploading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6">
-      <Link href="/" className="text-blue-600 underline text-sm">← Back to Home</Link>
-      <h1 className="text-3xl font-bold">Upload Your Sock</h1>
+    <div className="p-8 max-w-xl mx-auto text-center">
+      <h1 className="text-2xl font-bold mb-4">Upload a Sock</h1>
       <input
         type="file"
         accept="image/*"
-        onChange={(e) => setFile(e.target.files[0])}
-        className="border p-2"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+        className="mb-4"
       />
       <button
         onClick={handleUpload}
-        disabled={!file || uploading}
-        className="bg-black text-white px-6 py-2 rounded disabled:opacity-50"
+        disabled={loading || !file}
+        className="bg-blue-600 text-white px-6 py-2 rounded"
       >
-        {uploading ? "Uploading..." : "Upload and Match"}
+        {loading ? "Uploading..." : "Upload Sock"}
       </button>
-      {error && <p className="text-red-500">{error}</p>}
-    </main>
+    </div>
   );
 }

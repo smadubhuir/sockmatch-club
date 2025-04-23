@@ -1,74 +1,115 @@
+// /pages/results.js
+"use client";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/router";
 import axios from "axios";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-export default function BrowseSocksPage() {
-  const [socks, setSocks] = useState([]);
-  const [filter, setFilter] = useState({ color: "", pattern: "", sortOrder: "desc" });
+export default function ResultsPage() {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const { imageUrl } = router.query;
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    async function fetchSocks() {
-      try {
-        const response = await axios.get("/api/get-socks");
-        setSocks(response.data.socks || []);
-      } catch (error) {
-        console.error("Failed to load socks:", error);
-      }
-    }
-    fetchSocks();
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    checkUser();
   }, []);
 
-  const filteredSocks = socks
-    .filter(sock => 
-      (filter.color === "" || sock.color === filter.color) &&
-      (filter.pattern === "" || sock.pattern === filter.pattern)
-    )
-    .sort((a, b) => filter.sortOrder === "desc" ? b.price - a.price : a.price - b.price);
+  useEffect(() => {
+    if (!imageUrl || !user) return;
+    fetchImageAndMatch(imageUrl);
+  }, [imageUrl, user]);
+
+  const fetchImageAndMatch = async (url) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], "sock.jpg", { type: blob.type });
+
+      const embedding = await getEmbeddingFromFile(file);
+
+      const matchResponse = await axios.post("/api/match", {
+        embedding,
+        imageUrl,
+        threshold: 0.7,
+      });
+
+      setMatches(matchResponse.data.matches);
+    } catch (err) {
+      console.error("Matching error:", err);
+      setError("Could not find matches.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center p-10 space-y-8 text-center font-sans text-black bg-gray-100">
-      <nav className="absolute top-4 left-4">
-        <Link href="/" className="border border-black p-2 bg-gray-200">⬅ Back to Home</Link>
-      </nav>
+    <div className="p-8 max-w-4xl mx-auto text-center">
+      <h1 className="text-2xl font-bold mb-4">Your Sock Matches</h1>
+      {imageUrl && <img src={imageUrl} alt="Uploaded Sock" className="w-48 mx-auto mb-4 rounded border" />}
 
-      <h1 className="text-4xl font-bold underline">Browse Socks</h1>
-      <p className="text-md max-w-2xl">
-        Explore available socks and find your perfect match!
-      </p>
+      {!user && (
+        <div className="text-red-600 font-bold">
+          Please <a href="/login" className="underline">sign in</a> to view matches.
+        </div>
+      )}
 
-      {/* Filters */}
-      <div className="flex space-x-4 mb-6">
-        <select className="border border-black p-2" value={filter.color} onChange={e => setFilter({ ...filter, color: e.target.value })}>
-          <option value="">All Colors</option>
-          <option value="red">Red</option>
-          <option value="pink">Pink</option>
-          <option value="blue">Blue</option>
-          <option value="white">White</option>
-        </select>
+      {user && loading && <p className="text-blue-500">Finding matches...</p>}
+      {user && error && <p className="text-red-500">{error}</p>}
 
-        <select className="border border-black p-2" value={filter.pattern} onChange={e => setFilter({ ...filter, pattern: e.target.value })}>
-          <option value="">All Patterns</option>
-          <option value="striped">Striped</option>
-          <option value="graphic">Graphic</option>
-          <option value="solid">Solid</option>
-        </select>
+      {user && !loading && matches.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {matches.slice(0, 10).map((match, index) => (
+            <div key={index} className="border p-4 rounded shadow">
+              <img src={match.imageUrl} alt={`Match ${index + 1}`} className="w-32 mx-auto rounded" />
+              <p className="font-bold mt-2">SockRank: {(match.similarity * 100).toFixed(2)}%</p>
+            </div>
+          ))}
+        </div>
+      )}
 
-        <select className="border border-black p-2" value={filter.sortOrder} onChange={e => setFilter({ ...filter, sortOrder: e.target.value })}>
-          <option value="desc">Socks by $$$ (High to Low)</option>
-          <option value="asc">Socks by $$$ (Low to High)</option>
-        </select>
-      </div>
+      {user && !loading && matches.length === 0 && <p className="text-gray-500">No matches found.</p>}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-        {filteredSocks.map((sock, index) => (
-          <div key={index} className="border border-black p-2 flex flex-col items-center justify-center">
-            <img src={sock.image_url || sock.src} alt={`Sock ${index + 1}`} className="w-40 h-40 object-contain" onError={(e) => e.target.style.display='none'} />
-            <p className="text-sm mt-2">
-              {sock.color || "unknown"} - {sock.pattern || "unknown"} - ${sock.price || "?"}
-            </p>
-          </div>
-        ))}
-      </div>
+      {user && !loading && matches.length > 0 && (
+        <div className="mt-8">
+          <a
+            href="/browse"
+            className="inline-block bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300"
+          >
+            Browse More Socks
+          </a>
+        </div>
+      )}
     </div>
   );
+}
+
+async function loadMobilenet() {
+  const mobilenet = await import("@tensorflow-models/mobilenet");
+  const tf = await import("@tensorflow/tfjs");
+  return mobilenet.load();
+}
+
+async function getEmbeddingFromFile(file) {
+  const tf = await import("@tensorflow/tfjs");
+  const imageBitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = 224;
+  canvas.height = 224;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(imageBitmap, 0, 0, 224, 224);
+  const imageTensor = tf.browser.fromPixels(canvas);
+  const model = await loadMobilenet();
+  const embedding = model.infer(imageTensor.expandDims(0), true);
+  const array = await embedding.flatten().array();
+  tf.dispose([imageTensor, embedding]);
+  return array;
 }

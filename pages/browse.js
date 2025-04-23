@@ -1,19 +1,24 @@
-import React from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import axios from "axios";
 
 export default function BrowseSocksPage() {
-  const sockImages = [
-    { src: "/images/sock1.jpeg", color: "red", pattern: "striped", price: 5 },
-    { src: "/images/sock2.webp", color: "pink", pattern: "graphic", price: 7 },
-    { src: "/images/sock3.jpeg", color: "blue", pattern: "solid", price: 4 },
-    { src: "/images/sock4.jpg", color: "red", pattern: "striped", price: 6 },
-    { src: "/images/sock5.webp", color: "white", pattern: "striped", price: 3 }
-  ];
-
+  const [socks, setSocks] = useState([]);
   const [filter, setFilter] = useState({ color: "", pattern: "", sortOrder: "desc" });
 
-  const filteredSocks = sockImages
+  useEffect(() => {
+    async function fetchSocks() {
+      try {
+        const response = await axios.get("/api/get-socks");
+        setSocks(response.data.socks || []);
+      } catch (error) {
+        console.error("Failed to load socks:", error);
+      }
+    }
+    fetchSocks();
+  }, []);
+
+  const filteredSocks = socks
     .filter(sock => 
       (filter.color === "" || sock.color === filter.color) &&
       (filter.pattern === "" || sock.pattern === filter.pattern)
@@ -25,7 +30,7 @@ export default function BrowseSocksPage() {
       <nav className="absolute top-4 left-4">
         <Link href="/" className="border border-black p-2 bg-gray-200">⬅ Back to Home</Link>
       </nav>
-      
+
       <h1 className="text-4xl font-bold underline">Browse Socks</h1>
       <p className="text-md max-w-2xl">
         Explore available socks and find your perfect match!
@@ -57,8 +62,10 @@ export default function BrowseSocksPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
         {filteredSocks.map((sock, index) => (
           <div key={index} className="border border-black p-2 flex flex-col items-center justify-center">
-            <img src={sock.src} alt={`Sock ${index + 1}`} className="w-40 h-40 object-contain" onError={(e) => e.target.style.display='none'} />
-            <p className="text-sm mt-2">{sock.color} - {sock.pattern} - ${sock.price}</p>
+            <img src={sock.image_url || sock.src} alt={`Sock ${index + 1}`} className="w-40 h-40 object-contain" onError={(e) => e.target.style.display='none'} />
+            <p className="text-sm mt-2">
+              {sock.color || "unknown"} - {sock.pattern || "unknown"} - ${sock.price || "?"}
+            </p>
           </div>
         ))}
       </div>

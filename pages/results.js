@@ -26,6 +26,7 @@ export default function ResultsPage() {
 
       const matchResponse = await axios.post("/api/match", {
         embedding,
+        imageUrl,
         threshold: 0.7,
       });
 
@@ -39,7 +40,7 @@ export default function ResultsPage() {
   };
 
   return (
-    <div className="p-8 max-w-xl mx-auto text-center">
+    <div className="p-8 max-w-4xl mx-auto text-center">
       <h1 className="text-2xl font-bold mb-4">Your Sock Matches</h1>
       {imageUrl && <img src={imageUrl} alt="Uploaded Sock" className="w-48 mx-auto mb-4 rounded border" />}
 
@@ -48,7 +49,7 @@ export default function ResultsPage() {
 
       {!loading && matches.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {matches.map((match, index) => (
+          {matches.slice(0, 10).map((match, index) => (
             <div key={index} className="border p-4 rounded shadow">
               <img src={match.imageUrl} alt={`Match ${index + 1}`} className="w-32 mx-auto rounded" />
               <p className="font-bold mt-2">SockRank: {(match.similarity * 100).toFixed(2)}%</p>
@@ -58,6 +59,17 @@ export default function ResultsPage() {
       )}
 
       {!loading && matches.length === 0 && <p className="text-gray-500">No matches found.</p>}
+
+      {!loading && matches.length > 0 && (
+        <div className="mt-8">
+          <a
+            href="/browse"
+            className="inline-block bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300"
+          >
+            Browse More Socks
+          </a>
+        </div>
+      )}
     </div>
   );
 }
@@ -83,4 +95,3 @@ async function getEmbeddingFromFile(file) {
   tf.dispose([imageTensor, embedding]);
   return array;
 }
-

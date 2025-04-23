@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { embedding, threshold = 0.7 } = req.body;
+    const { embedding, imageUrl, threshold = 0.7 } = req.body;
 
     if (!embedding || !Array.isArray(embedding)) {
       return res.status(400).json({ error: "Missing or invalid embedding" });
@@ -57,10 +57,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Failed to fetch socks" });
     }
 
-    const scoredMatches = socks.map((sock) => ({
-      imageUrl: sock.image_url,
-      similarity: cosineSimilarity(embedding, sock.embedding),
-    }));
+    const scoredMatches = socks
+  .filter((sock) => sock.image_url !== imageUrl)  // 🚫 exclude uploaded image
+  .map((sock) => ({
+    imageUrl: sock.image_url,
+    similarity: cosineSimilarity(embedding, sock.embedding),
+  }));
 
     const matches = scoredMatches
       .filter((match) => match.similarity >= threshold)

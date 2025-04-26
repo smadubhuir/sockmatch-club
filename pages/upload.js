@@ -40,47 +40,51 @@ export default function UploadPage() {
   const { session } = useSupabaseSession();
 
   const handleUpload = async () => {
-    if (!file) return;
-    setLoading(true);
-
-    try {
-      // Upload to Cloudinary
-      const formData = new FormData();
-      formData.append("image", file);
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const { imageUrl } = await uploadRes.json();
-
-      // Generate embedding
-      const embedding = await getEmbeddingFromFile(file);
-
-      // Save to Supabase
-await axios.post(
-  "/api/save-sock",
-  {
-    imageUrl,
-    embedding,
-    userId: session?.user?.id,
-  },
-  {
-    headers: {
-      "Content-Type": "application/json",
-    },
+  if (!file) return;
+  if (!session?.user?.id) {
+    alert("You must be signed in to upload a sock.");
+    return;
   }
-);
 
+  setLoading(true);
 
-      // Route to match page with image URL
-      router.push(`/upload?imageUrl=${encodeURIComponent(imageUrl)}`);
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append("image", file);
+    const uploadRes = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const { imageUrl } = await uploadRes.json();
+
+    // Generate embedding
+    const embedding = await getEmbeddingFromFile(file);
+
+    // Save to Supabase
+    await axios.post(
+      "/api/save-sock",
+      {
+        imageUrl,
+        embedding,
+        userId: session.user.id, // ✅ guaranteed to exist now
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Route to match page with image URL
+    router.push(`/upload?imageUrl=${encodeURIComponent(imageUrl)}`);
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert("Upload failed.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-8 max-w-xl mx-auto text-center">

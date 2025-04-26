@@ -1,9 +1,11 @@
-import { supabase } from "@/lib/supabaseAdmin";
+import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  const supabase = createSupabaseServerClient(req, res);
 
   try {
     const { data: socks, error } = await supabase

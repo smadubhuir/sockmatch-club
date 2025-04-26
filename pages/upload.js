@@ -57,11 +57,20 @@ export default function UploadPage() {
       const embedding = await getEmbeddingFromFile(file);
 
       // Save to Supabase
-      await axios.post("/api/save-sock", {
-        imageUrl,
-        embedding,
-        userId: session?.user?.id,
-      });
+await axios.post(
+  "/api/save-sock",
+  {
+    imageUrl,
+    embedding,
+    userId: session?.user?.id,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }
+);
+
 
       // Route to match page with image URL
       router.push(`/upload?imageUrl=${encodeURIComponent(imageUrl)}`);

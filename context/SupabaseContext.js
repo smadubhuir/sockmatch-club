@@ -1,4 +1,5 @@
-// context/SupabaseContext.js
+"use client";
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -9,9 +10,11 @@ export const SupabaseProvider = ({ children }) => {
 
   useEffect(() => {
     // Get initial session
-    const currentSession = supabase.auth.getSession().then(({ data }) => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
       setSession(data.session);
-    });
+    };
+    getSession();
 
     // Listen for auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,4 +40,3 @@ export const useSupabaseSession = () => {
   }
   return context;
 };
-

@@ -21,4 +21,17 @@ export default async function handler(req, res) {
           image_url: imageUrl,
           embedding: embedding,
           user_id: userId,
-        },
+        }
+      ]); // ← YOU WERE MISSING THIS CLOSING BRACKET + PARENTHESIS
+
+    if (error) {
+      console.error("❌ Supabase insert error:", error);
+      return res.status(500).json({ error: "Failed to save sock" });
+    }
+
+    return res.status(200).json({ message: "Sock saved successfully", data });
+  } catch (err) {
+    console.error("❌ API Error:", err);
+    return res.status(500).json({ error: "Unexpected server error" });
+  }
+}

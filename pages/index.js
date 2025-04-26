@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -29,7 +30,7 @@ export default function HomePage() {
       <img 
         src="https://res.cloudinary.com/dilhl61st/image/upload/q_auto,f_auto/v1741624889/sockmatch/374283b4b62bb52e316d5f101.jpg"
         alt="SockMatch Club Art" 
-        className="w-80 md:w-[25rem] object-contain rounded-lg mb-6" 
+        className="w-80 md:w-[25rem] object-cover rounded-lg mb-6" 
       />
 
       <h1 className="text-4xl font-bold underline">Welcome to SockMatch.Club</h1>
@@ -39,7 +40,7 @@ export default function HomePage() {
       </p>
 
       {/* Get Started Button */}
-      <Link href="/upload-form">
+      <Link href="/upload">
         <button className="border border-black bg-blue-500 text-white px-6 py-2 text-md font-bold uppercase hover:bg-blue-600 transition">
           Get Started
         </button>
@@ -49,18 +50,17 @@ export default function HomePage() {
       <h2 className="text-2xl font-semibold mt-12">Socks Seeking Matches:</h2>
 
       <div className="w-full max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 border border-red-500">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           {socks.length > 0 ? (
             socks.map((sock, index) => (
               <div 
                 key={index} 
-                className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center justify-center border border-blue-500"
+                className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center justify-center"
               >
                 <img 
-                  src={sock.imageUrl} 
+                  src={sock.image_url} 
                   alt="Sock" 
-                  className="w-40 h-40 object-contain rounded-md m
-                  b-2 border border-green-500"
+                  className="w-40 h-40 object-cover rounded-md mb-2"
                 />
                 <p className="text-sm text-gray-700 text-center w-full break-words">
                   {sock.name || "Unnamed Sock"}
@@ -76,7 +76,7 @@ export default function HomePage() {
       </div>
 
       {/* Browse More Button */}
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 mt-8">
         <Link href="/browse">
           <button className="border border-black bg-gray-200 text-black px-6 py-2 text-md font-bold uppercase hover:bg-gray-300 transition">
             Browse More Socks

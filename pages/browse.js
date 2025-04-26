@@ -1,17 +1,18 @@
 "use client";
+
 import { useSupabaseSession } from "../context/SupabaseContext";
 import { supabase } from "../lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import axios from "axios";
 
-export default function ResultsPage() {
+export default function BrowsePage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const router = useRouter();
   const { imageUrl } = router.query;
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const checkUser = async () => {

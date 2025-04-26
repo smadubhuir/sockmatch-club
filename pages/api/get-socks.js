@@ -1,14 +1,12 @@
-import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabaseAdmin"; // 👈 Correct import
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const supabase = createSupabaseServerClient(req, res);
-
   try {
-    const { data: socks, error } = await supabase
+    const { data: socks, error } = await supabaseAdmin
       .from("socks")
       .select("image_url, name, color, pattern, price, created_at")
       .order("created_at", { ascending: false })

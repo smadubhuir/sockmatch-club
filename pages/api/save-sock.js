@@ -1,8 +1,6 @@
-import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
-  const supabase = createSupabaseServerClient(req, res);
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
@@ -14,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("socks")
       .insert([
         {
@@ -22,7 +20,7 @@ export default async function handler(req, res) {
           embedding: embedding,
           user_id: userId,
         }
-      ]); // ← YOU WERE MISSING THIS CLOSING BRACKET + PARENTHESIS
+      ]);
 
     if (error) {
       console.error("❌ Supabase insert error:", error);

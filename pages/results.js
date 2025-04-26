@@ -1,5 +1,8 @@
 "use client";
-import { createServerClient } from "@supabase/ssr";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import axios from "axios";
+
 export async function getServerSideProps(context) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,

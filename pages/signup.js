@@ -22,15 +22,52 @@ export default function Signup() {
       alert(error.message);
     } else {
       alert("Check your email to confirm your account!");
-      router.push("/login"); // after signup, send them to login
+      router.push("/login");
     }
   };
 
   if (session) {
     router.push("/browse");
-    return null; // optional: or show "already logged in"
+    return null;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form onSubmit={handleSignup} className="bg-white p-6 rounded shadow-md w-80">
+        <h2 className="text-2xl mb-4 font-bold text-center">Sign Up</h2>
 
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 mb-4 border border-gray-300 rounded"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password (6+ characters)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 mb-4 border border-gray-300 rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+        >
+          Sign Up
+        </button>
+
+        <p className="text-sm text-center mt-4">
+          Already have an account?{" "}
+          <Link href="/login">
+            <a className="text-blue-500 hover:underline">Log in</a>
+          </Link>
+        </p>
+      </form>
+    </div>
+  );
+}

@@ -1,6 +1,5 @@
-// /pages/results.js
+"use client";
 import { createServerClient } from "@supabase/ssr";
-
 export async function getServerSideProps(context) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,

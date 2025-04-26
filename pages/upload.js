@@ -5,6 +5,8 @@ import { useRouter } from "next/router";
 import * as tf from "@tensorflow/tfjs";
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import axios from "axios";
+import { useSupabaseSession } from "../context/SupabaseContext";
+
 
 let model;
 async function loadMobilenet() {
@@ -35,6 +37,7 @@ export default function UploadPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { session } = useSupabaseSession();
 
   const handleUpload = async () => {
     if (!file) return;
@@ -57,6 +60,7 @@ export default function UploadPage() {
       await axios.post("/api/save-sock", {
         imageUrl,
         embedding,
+        userId: session?.user?.id,
       });
 
       // Route to match page with image URL

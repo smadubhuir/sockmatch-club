@@ -1,4 +1,35 @@
 // /pages/results.js
+import { createServerClient } from "@supabase/ssr";
+
+export async function getServerSideProps(context) {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      req: context.req,
+      res: context.res,
+    }
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: `/login?redirect=/results&imageUrl=${encodeURIComponent(context.query.imageUrl || "")}`,
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      initialSession: session,
+      user: session.user,
+    },
+  };
+}
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";

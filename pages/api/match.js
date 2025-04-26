@@ -1,6 +1,4 @@
-import { supabase } from "../../lib/supabaseAdmin";
-import * as tf from "@tensorflow/tfjs";
-import * as mobilenet from "@tensorflow-models/mobilenet";
+import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
 
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -9,33 +7,9 @@ function cosineSimilarity(vecA, vecB) {
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
-let model;
-async function loadMobilenet() {
-  if (!model) {
-    model = await mobilenet.load();
-  }
-  return model;
-}
-
-export async function getEmbeddingFromFile(file) {
-  const imageBitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = 224;
-  canvas.height = 224;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(imageBitmap, 0, 0, 224, 224);
-
-  const imageTensor = tf.browser.fromPixels(canvas);
-
-  const model = await loadMobilenet();
-  const embedding = model.infer(imageTensor.expandDims(0), true);
-  const array = await embedding.flatten().array();
-
-  tf.dispose([imageTensor, embedding]);
-  return array;
-}
-
 export default async function handler(req, res) {
+  const supabase = createSupabaseServerClient(req, res);
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -57,19 +31,20 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Failed to fetch socks" });
     }
 
+    // Score matches
     const scoredMatches = socks
-  .filter((sock) => sock.image_url !== imageUrl)  // 🚫 exclude uploaded image
-  .map((sock) => ({
-    imageUrl: sock.image_url,
-    similarity: cosineSimilarity(embedding, sock.embedding),
-  }));
+      .filter((sock) => sock.image_url !== imageUrl) // 🚫 Exclude uploaded sock
+      .map((sock) => ({
+        imageUrl: sock.image_url,
+        similarity: cosineSimilarity(embedding, sock.embedding),
+      }));
 
     const matches = scoredMatches
       .filter((match) => match.similarity >= threshold)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, 6);
 
-    // If no matches pass the threshold, return top 1 as fallback
+    // Fallback: If no matches pass threshold, return top 1 match
     if (matches.length === 0 && scoredMatches.length > 0) {
       const bestFallback = scoredMatches.sort((a, b) => b.similarity - a.similarity)[0];
       return res.status(200).json({ matches: [bestFallback] });

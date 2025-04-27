@@ -5,28 +5,12 @@ import { supabase } from "../lib/supabaseClient";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSupabaseSession } from "../context/SupabaseContext";
-import Toast from "../components/Toast"; // add
-
-const [toast, setToast] = useState(null); // add
-
-const handleSignup = async (e) => {
-  e.preventDefault();
-  const { error } = await supabase.auth.signUp({ email, password });
-
-  if (error) {
-    alert(error.message);
-  } else {
-    setToast("Account created! Check email to confirm.");
-    setTimeout(() => router.push("/login"), 2000);
-  }
-};
-
-{toast && <Toast message={toast} />} // inside return()
-
+import Toast from "../components/Toast";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [toast, setToast] = useState(null);
   const router = useRouter();
   const { session } = useSupabaseSession();
 
@@ -40,8 +24,8 @@ export default function Signup() {
     if (error) {
       alert(error.message);
     } else {
-      alert("Check your email to confirm your account!");
-      router.push("/login");
+      setToast("Account created! Check your email to confirm.");
+      setTimeout(() => router.push("/login"), 2000);
     }
   };
 
@@ -52,6 +36,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      {toast && <Toast message={toast} />}
       <form onSubmit={handleSignup} className="bg-white p-6 rounded shadow-md w-80">
         <h2 className="text-2xl mb-4 font-bold text-center">Sign Up</h2>
 
@@ -82,7 +67,7 @@ export default function Signup() {
 
         <p className="text-sm text-center mt-4">
           Already have an account?{" "}
-          <Link href="/login">
+          <Link href="/login" legacyBehavior>
             <a className="text-blue-500 hover:underline">Log in</a>
           </Link>
         </p>

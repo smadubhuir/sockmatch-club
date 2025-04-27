@@ -1,13 +1,27 @@
-"use client"; 
+"use client";
+
 import Link from "next/link";
 import { useSupabaseSession } from "../context/SupabaseContext";
 import { supabase } from "../lib/supabaseClient";
+import { useState } from "react"; // add
+import Toast from "../components/Toast"; // add
+
+const [toast, setToast] = useState(null); // add
+
+const handleSignOut = async () => {
+  await supabase.auth.signOut();
+  setToast("Signed out!");
+  setTimeout(() => (window.location.href = "/"), 1500);
+};
+
+{toast && <Toast message={toast} />} // inside return()
 
 export default function Navbar() {
   const { session } = useSupabaseSession();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    window.location.href = "/"; // Refresh to homepage after sign out
   };
 
   return (
@@ -21,27 +35,24 @@ export default function Navbar() {
             <a>Browse Socks</a>
           </Link>
         </div>
-        <div>
+
+        <div className="flex space-x-2 items-center">
           {session ? (
-            <div className="flex items-center space-x-2">
-              <span>Signed in as {session.user.email}</span>
-              <button 
+            <>
+              <span className="text-sm">Signed in as {session.user.email}</span>
+              <button
                 onClick={handleSignOut}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
               >
-                Sign out
+                Sign Out
               </button>
-            </div>
+            </>
           ) : (
             <Link href="/login">
-              <a className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded">
-                Log in
+              <a className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded text-sm">
+                Log In
               </a>
             </Link>
-            <Link href="/my-socks">
-  <a>My Socks</a>
-</Link>
-
           )}
         </div>
       </div>

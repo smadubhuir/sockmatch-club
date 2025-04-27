@@ -4,6 +4,24 @@ import { supabase } from "../lib/supabaseClient";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSupabaseSession } from "../context/SupabaseContext";
+import Toast from "../components/Toast"; // add
+
+const [toast, setToast] = useState(null); // add
+
+const handleSignup = async (e) => {
+  e.preventDefault();
+  const { error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    alert(error.message);
+  } else {
+    setToast("Account created! Check email to confirm.");
+    setTimeout(() => router.push("/login"), 2000);
+  }
+};
+
+{toast && <Toast message={toast} />} // inside return()
+
 
 export default function Signup() {
   const [email, setEmail] = useState("");

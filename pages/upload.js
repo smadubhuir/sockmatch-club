@@ -36,6 +36,7 @@ async function getEmbeddingFromFile(file) {
 export default function UploadPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [price, setPrice] = useState("");
   const router = useRouter();
   const { session } = useSupabaseSession();
 
@@ -67,7 +68,8 @@ export default function UploadPage() {
       {
         imageUrl,
         embedding,
-        userId: session.user.id, // ✅ guaranteed to exist now
+        userId: session.user.id,
+        price: price ? parseFloat(price) : null,
       },
       {
         headers: {
@@ -95,13 +97,22 @@ export default function UploadPage() {
         onChange={(e) => setFile(e.target.files?.[0] || null)}
         className="mb-4"
       />
-      <button
-        onClick={handleUpload}
-        disabled={loading || !file}
-        className="bg-blue-600 text-white px-6 py-2 rounded"
-      >
-        {loading ? "Uploading..." : "Upload Sock"}
-      </button>
+        <input
+    type="number"
+    step="0.01"
+    placeholder="Set a price ($)"
+    value={price}
+    onChange={(e) => setPrice(e.target.value)}
+    className="mb-4 border p-2 rounded w-full"
+  />
+    <button
+  onClick={handleUpload}
+  disabled={loading || !file}
+  className="bg-blue-600 text-white px-6 py-2 rounded"
+>
+  {loading ? "Uploading Sock..." : "Upload Sock"}
+</button>
+
     </div>
   );
 }

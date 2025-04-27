@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     // Fetch all socks from Supabase
     const { data: socks, error } = await supabase
       .from("socks")
-      .select("image_url, embedding");
+      .select("image_url, embedding, price");
 
     if (error) {
       console.error("Supabase fetch error:", error);

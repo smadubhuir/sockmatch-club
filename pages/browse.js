@@ -13,6 +13,23 @@ export default function BrowsePage() {
   const [user, setUser] = useState(null);
   const router = useRouter();
   const { imageUrl } = router.query;
+  const handleBuySock = async (sock) => {
+  try {
+    const res = await axios.post("/api/checkout-session", {
+      price: sock.price,
+      sockImageUrl: sock.imageUrl,
+    });
+
+    const { sessionId } = res.data;
+
+    const stripe = await (await import("@stripe/stripe-js")).loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+    await stripe.redirectToCheckout({ sessionId });
+  } catch (err) {
+    console.error("Error starting checkout:", err);
+    alert("Failed to start checkout.");
+  }
+};
+
 
   useEffect(() => {
     const checkUser = async () => {
@@ -68,11 +85,40 @@ export default function BrowsePage() {
       {user && !loading && matches.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {matches.slice(0, 10).map((match, index) => (
-            <div key={index} className="border p-4 rounded shadow">
-              <img src={match.imageUrl} alt={`Match ${index + 1}`} className="w-32 mx-auto rounded" />
-              <p className="font-bold mt-2">SockRank: {(match.similarity * 100).toFixed(2)}%</p>
-            </div>
-          ))}
+  <div key={index} className="border p-4 rounded shadow flex flex-col items-center">
+    <img
+      src={match.imageUrl}
+      alt={`Match ${index + 1}`}
+      className="w-32 mx-auto rounded mb-2"
+    />
+
+    <p className="font-bold mt-2">
+      SockRank: {(match.similarity * 100).toFixed(2)}%
+    </p>
+
+    {/* Show price if available */}
+    {match.price ? (
+      <div className="mt-2 text-green-700 font-semibold">
+        ${match.price.toFixed(2)}
+      </div>
+    ) : (
+      <div className="mt-2 text-gray-400 text-sm">
+        No price set
+      </div>
+    )}
+
+    {/* Show buy button only if price exists */}
+    {match.price && (
+      <button
+        onClick={() => handleBuySock(match)}
+        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded text-sm"
+      >
+        Buy Sock
+      </button>
+    )}
+  </div>
+))}
+
         </div>
       )}
 

@@ -63,7 +63,7 @@ export default function Login() {
 
         <p className="text-sm text-center mt-4">
           Don't have an account?{" "}
-          <Link href="/signup">
+          <Link href="/signup" legacyBehavior>
             <a className="text-blue-500 hover:underline">Sign up</a>
           </Link>
         </p>

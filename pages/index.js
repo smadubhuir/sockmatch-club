@@ -5,36 +5,37 @@ import Link from "next/link";
 
 export default function HomePage() {
   const [socks, setSocks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/get-socks")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched socks:", data.socks);
-        if (data && data.socks) {
-          setSocks(data.socks.slice(0, 6)); 
+    const fetchSocks = async () => {
+      try {
+        const res = await fetch("/api/get-socks");
+        const data = await res.json();
+        console.log("Fetched socks:", data);
+
+        // Some versions return { socks: [...] }, others just [...]
+        const sockArray = data?.socks || data;
+
+        if (Array.isArray(sockArray)) {
+          setSocks(sockArray.slice(0, 6));
         } else {
-          console.error("No socks data received.");
+          console.error("Invalid sock data format.");
           setSocks([]);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching socks:", error);
         setSocks([]);
-      });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSocks();
   }, []);
-  useEffect(() => {
-  fetch("/api/get-socks")
-    .then((data) => {
-  console.log("Fetched socks:", data);
-  setSocks(data);
-});
-
-
 
   return (
     <div className="flex flex-col items-center p-10 space-y-8 text-center font-sans text-black bg-white min-h-screen">
-      {/* Artwork at the top */}
       <img 
         src="https://res.cloudinary.com/dilhl61st/image/upload/q_auto,f_auto/v1741624889/sockmatch/374283b4b62bb52e316d5f101.jpg"
         alt="SockMatch Club Art" 
@@ -47,26 +48,26 @@ export default function HomePage() {
         Upload a sock, set a price, and discover the best match!
       </p>
 
-      {/* Get Started Button */}
       <Link href="/upload">
         <button className="border border-black bg-blue-500 text-white px-6 py-2 text-md font-bold uppercase hover:bg-blue-600 transition">
           Get Started
         </button>
       </Link>
      
-      {/* Latest Uploaded Socks Section */}
       <h2 className="text-2xl font-semibold mt-12">Socks Seeking Matches:</h2>
 
       <div className="w-full max-w-4xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {socks.length > 0 ? (
+          {loading ? (
+            <p className="col-span-full text-gray-400">Loading socks...</p>
+          ) : socks.length > 0 ? (
             socks.map((sock, index) => (
               <div 
                 key={index} 
                 className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center justify-center"
               >
                 <img 
-                  src={sock.image_url} 
+                  src={sock.image_url || "/placeholder.png"} 
                   alt="Sock" 
                   className="w-40 h-40 object-cover rounded-md mb-2"
                 />
@@ -76,14 +77,13 @@ export default function HomePage() {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 col-span-2 md:col-span-3 text-center">
+            <p className="text-gray-500 col-span-full text-center">
               No socks uploaded yet.
             </p>
           )}
         </div>
       </div>
 
-      {/* Browse More Button */}
       <div className="flex space-x-4 mt-8">
         <Link href="/browse">
           <button className="border border-black bg-gray-200 text-black px-6 py-2 text-md font-bold uppercase hover:bg-gray-300 transition">

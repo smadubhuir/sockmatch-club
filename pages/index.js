@@ -25,10 +25,11 @@ export default function HomePage() {
   }, []);
   useEffect(() => {
   fetch("/api/get-socks")
-    .then((res) => res.json())
     .then((data) => {
-      console.log("Fetched socks:", data);
-      ...
+  console.log("Fetched socks:", data);
+  setSocks(data);
+});
+
 
 
   return (

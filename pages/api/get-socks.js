@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data: socks, error } = await supabase
+    const { data: socks, error } = await supabaseAdmin
       .from("socks")
       .select("id, image_url, name, color, pattern, price, created_at")
       .order("created_at", { ascending: false })

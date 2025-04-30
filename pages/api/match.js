@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -8,7 +8,7 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 export default async function handler(req, res) {
-  const supabase = createSupabaseServerClient(req, res);
+  const supabase = supabaseAdmin;
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });

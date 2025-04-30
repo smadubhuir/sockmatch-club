@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabase } from "../../lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -6,20 +6,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data: socks, error } = await supabaseAdmin
-      .from("socks")
-      .select("id, image_url, name, color, pattern, price, created_at")
-      .order("created_at", { ascending: false })
-      .limit(30);
+    const { data, error } = await supabase.from("socks").select("*");
 
     if (error) {
-      console.error("Supabase fetch error:", error);
-      return res.status(500).json({ error: "Failed to fetch socks" });
+      console.error("Supabase error:", error);
+      return res.status(500).json({ error: error.message });
     }
 
-    res.status(200).json({ socks });
+    console.log("Fetched socks data:", data);
+    return res.status(200).json(data);
   } catch (err) {
-    console.error("Unexpected API Error:", err);
-    res.status(500).json({ error: "Unexpected server error" });
+    console.error("Unexpected error:", err);
+    return res.status(500).json({ error: "Unexpected error: " + err.message });
   }
 }

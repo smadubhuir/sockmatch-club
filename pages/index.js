@@ -23,6 +23,13 @@ export default function HomePage() {
         setSocks([]);
       });
   }, []);
+  useEffect(() => {
+  fetch("/api/get-socks")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Fetched socks:", data);
+      ...
+
 
   return (
     <div className="flex flex-col items-center p-10 space-y-8 text-center font-sans text-black bg-white min-h-screen">

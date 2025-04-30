@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabase } from "@/lib/supabaseAdmin";
 
 function cosineSimilarity(vecA, vecB) {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
@@ -8,8 +8,6 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 export default async function handler(req, res) {
-  const supabase = supabaseAdmin;
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -21,7 +19,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing or invalid embedding" });
     }
 
-    // Fetch all socks from Supabase
     const { data: socks, error } = await supabase
       .from("socks")
       .select("image_url, embedding, price");
@@ -31,9 +28,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Failed to fetch socks" });
     }
 
-    // Score matches
     const scoredMatches = socks
-      .filter((sock) => sock.image_url !== imageUrl) // 🚫 Exclude uploaded sock
+      .filter((sock) => sock.image_url !== imageUrl)
       .map((sock) => ({
         imageUrl: sock.image_url,
         similarity: cosineSimilarity(embedding, sock.embedding),
@@ -44,7 +40,6 @@ export default async function handler(req, res) {
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, 6);
 
-    // Fallback: If no matches pass threshold, return top 1 match
     if (matches.length === 0 && scoredMatches.length > 0) {
       const bestFallback = scoredMatches.sort((a, b) => b.similarity - a.similarity)[0];
       return res.status(200).json({ matches: [bestFallback] });

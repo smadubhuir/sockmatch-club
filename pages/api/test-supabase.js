@@ -1,7 +1,7 @@
-import { createSupabaseServerClient } from "@/lib/supabaseAdmin";
+import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 
 export default async function handler(req, res) {
-  const supabase = createSupabaseServerClient(req, res);
+  const supabase = createSupabaseServerClient();
 
   try {
     const { data, error } = await supabase

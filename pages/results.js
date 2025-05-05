@@ -101,3 +101,4 @@ async function getEmbeddingFromFile(file) {
   const canvas = document.createElement("canvas");
   canvas.width = 224;
   canvas.height = 224;
+}

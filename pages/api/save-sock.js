@@ -12,10 +12,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing or invalid imageUrl or embedding" });
   }
 
+  console.log("📦 Incoming payload:", {
+    imageUrl,
+    embeddingLength: embedding.length,
+    userId,
+    price,
+    buyOffer
+  });
+
   try {
     const { data, error } = await supabase
       .from("socks")
-      console.log("Incoming payload:", { imageUrl, embeddingLength: embedding.length, userId, price, offer });
       .insert([
         {
           image_url: imageUrl,

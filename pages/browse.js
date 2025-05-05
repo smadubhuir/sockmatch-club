@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useSupabaseSession } from "../context/SupabaseContext";
 import { supabase } from "../lib/supabaseClient";

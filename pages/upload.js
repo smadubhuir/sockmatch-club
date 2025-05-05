@@ -1,36 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import * as tf from "@tensorflow/tfjs";
-import * as mobilenet from "@tensorflow-models/mobilenet";
 import axios from "axios";
 import { useSupabaseSession } from "../context/SupabaseContext";
-
-let model;
-async function loadMobilenet() {
-  if (!model) {
-    model = await mobilenet.load();
-  }
-  return model;
-}
-
-async function getEmbeddingFromFile(file) {
-  const imageBitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = 224;
-  canvas.height = 224;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(imageBitmap, 0, 0, 224, 224);
-
-  const imageTensor = tf.browser.fromPixels(canvas);
-  const model = await loadMobilenet();
-  const embedding = model.infer(imageTensor.expandDims(0), true);
-  const array = await embedding.flatten().array();
-
-  tf.dispose([imageTensor, embedding]);
-  return array;
-}
+import { getEmbeddingFromFile, loadMobilenet } from "@/lib/mobilenet";
 
 export default function UploadPage() {
   const [file, setFile] = useState(null);
@@ -39,6 +13,11 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { session } = useSupabaseSession();
+
+  // Preload MobileNet on page load
+  useEffect(() => {
+    loadMobilenet().catch(console.error);
+  }, []);
 
   const handleUpload = async () => {
     if (!file || !sellPrice || !buyOffer) {
@@ -49,7 +28,6 @@ export default function UploadPage() {
     setLoading(true);
 
     try {
-      // Upload to Cloudinary
       const formData = new FormData();
       formData.append("image", file);
       const uploadRes = await fetch("/api/upload", {
@@ -58,10 +36,8 @@ export default function UploadPage() {
       });
       const { imageUrl } = await uploadRes.json();
 
-      // Generate embedding
       const embedding = await getEmbeddingFromFile(file);
 
-      // Save to Supabase — allow anonymous
       const payload = {
         imageUrl,
         embedding,
@@ -71,13 +47,10 @@ export default function UploadPage() {
       };
 
       await axios.post("/api/save-sock", payload, {
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
 
-      // Optional: store for later re-claiming
       localStorage.setItem("sockUpload", JSON.stringify(payload));
-
-      // Redirect to match results
       router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
     } catch (err) {
       console.error("Upload error:", err);

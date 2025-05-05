@@ -1,11 +1,7 @@
-"use client";
-import "../styles/globals.css";
-import { SupabaseProvider } from "../context/SupabaseContext";
+import "@/styles/globals.css";
 
-export default function MyApp({ Component, pageProps }) {
-  return (
-    <SupabaseProvider>
-      <Component {...pageProps} />
-    </SupabaseProvider>
-  );
+function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps} />;
 }
+
+export default MyApp;

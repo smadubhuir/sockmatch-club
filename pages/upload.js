@@ -34,19 +34,15 @@ async function getEmbeddingFromFile(file) {
 
 export default function UploadPage() {
   const [file, setFile] = useState(null);
-  const [price, setPrice] = useState("");
+  const [sellPrice, setSellPrice] = useState("");
+  const [buyOffer, setBuyOffer] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { session } = useSupabaseSession();
 
   const handleUpload = async () => {
-    if (!file || !price) {
-      alert("Please select a sock and set a price!");
-      return;
-    }
-    if (!session?.user?.id) {
-      alert("You must be signed in to upload a sock.");
-      router.push("/login");
+    if (!file || !sellPrice || !buyOffer) {
+      alert("Please complete all fields.");
       return;
     }
 
@@ -65,24 +61,24 @@ export default function UploadPage() {
       // Generate embedding
       const embedding = await getEmbeddingFromFile(file);
 
-      // Save to Supabase
-      await axios.post(
-        "/api/save-sock",
-        {
-          imageUrl,
-          embedding,
-          userId: session.user.id,
-          price: parseFloat(price), // 👈 ensure price is a number
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          }
-        }
-      );
+      // Save to Supabase — allow anonymous
+      const payload = {
+        imageUrl,
+        embedding,
+        userId: session?.user?.id || null,
+        price: parseFloat(sellPrice),
+        offer: parseFloat(buyOffer),
+      };
 
-      // Route to browse page (or match page if you prefer)
-      router.push("/browse");
+      await axios.post("/api/save-sock", payload, {
+        headers: { "Content-Type": "application/json" }
+      });
+
+      // Optional: store for later re-claiming
+      localStorage.setItem("sockUpload", JSON.stringify(payload));
+
+      // Redirect to match results
+      router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Upload failed. Please try again.");
@@ -107,21 +103,38 @@ export default function UploadPage() {
         </div>
 
         <div>
-          <label className="block mb-2 font-semibold">How much would you like to sell it for? (USD)</label>
+          <label className="block mb-2 font-semibold">
+            If someone wants to buy this sock, how much would you sell it for? (USD)
+          </label>
           <input
             type="number"
             step="0.01"
             min="0"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Enter price (e.g., 5.00)"
+            value={sellPrice}
+            onChange={(e) => setSellPrice(e.target.value)}
+            placeholder="e.g., 5.00"
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 font-semibold">
+            If you found a match for this sock, how much would you pay for it? (USD)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={buyOffer}
+            onChange={(e) => setBuyOffer(e.target.value)}
+            placeholder="e.g., 3.00"
             className="w-full border rounded p-2"
           />
         </div>
 
         <button
           onClick={handleUpload}
-          disabled={loading || !file || !price}
+          disabled={loading}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
         >
           {loading ? "Uploading Sock..." : "Upload Sock"}

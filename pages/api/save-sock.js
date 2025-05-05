@@ -19,8 +19,8 @@ export default async function handler(req, res) {
           image_url: imageUrl,
           embedding,
           user_id: userId || null,   // ✅ allow anonymous
-          price: price,
-          offer: offer,
+        price: price ? parseFloat(price) : null,
+        buy_offer: buyOffer ? parseFloat(buyOffer) : null,
         },
       ]);
 

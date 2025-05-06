@@ -39,12 +39,12 @@ export default function UploadPage() {
       const embedding = await getEmbeddingFromFile(file);
 
       const payload = {
-        imageUrl,
-        embedding,
-        userId: session?.user?.id || null,
-        price: parseFloat(sellPrice),
-        offer: parseFloat(buyOffer),
-      };
+  imageUrl,
+  embedding,
+  userId: session?.user?.id || null,
+  price: parseFloat(sellPrice),
+  buy_offer: parseFloat(buyOffer),
+};
 
       await axios.post("/api/save-sock", payload, {
         headers: { "Content-Type": "application/json" },

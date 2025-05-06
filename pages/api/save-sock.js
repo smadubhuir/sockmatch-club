@@ -1,4 +1,4 @@
-import supabase from "@/lib/supabaseAdmin";
+import { supabase } from "@/lib/supabaseAdmin";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -7,17 +7,18 @@ export default async function handler(req, res) {
 
   const { imageUrl, embedding, userId, price, buyOffer } = req.body;
 
-  // Only require imageUrl and embedding
+  // Minimal required fields: image and embedding
   if (!imageUrl || !embedding || !Array.isArray(embedding)) {
     return res.status(400).json({ error: "Missing or invalid imageUrl or embedding" });
   }
 
-  console.log("📦 Incoming payload:", {
+  // Debug: log key payload info
+  console.log("📦 Incoming sock upload:", {
     imageUrl,
     embeddingLength: embedding.length,
     userId,
     price,
-    buyOffer
+    buyOffer,
   });
 
   try {
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ message: "Sock saved successfully", data });
   } catch (err) {
-    console.error("❌ Unexpected API Error:", err);
+    console.error("❌ Unexpected server error:", err);
     return res.status(500).json({ error: "Unexpected server error", details: err.message });
   }
 }

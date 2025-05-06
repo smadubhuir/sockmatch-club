@@ -5,23 +5,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { imageUrl, embedding, userId, price, buyOffer } = req.body;
+  const { imageUrl, embedding, userId, price, offer } = req.body;
 
-  // Minimal required fields: image and embedding
   if (!imageUrl || !embedding || !Array.isArray(embedding)) {
     return res.status(400).json({ error: "Missing or invalid imageUrl or embedding" });
   }
 
-  // Debug: log key payload info
-  console.log("📦 Incoming sock upload:", {
-    imageUrl,
-    embeddingLength: embedding.length,
-    userId,
-    price,
-    buyOffer,
-  });
-
   try {
+    console.log("Incoming payload:", {
+      imageUrl,
+      embeddingLength: embedding.length,
+      userId,
+      price,
+      offer,
+    });
+
     const { data, error } = await supabase
       .from("socks")
       .insert([
@@ -30,7 +28,7 @@ export default async function handler(req, res) {
           embedding,
           user_id: userId || null,
           price: price !== undefined ? parseFloat(price) : null,
-          buy_offer: buyOffer !== undefined ? parseFloat(buyOffer) : null,
+          buy_offer: offer !== undefined ? parseFloat(offer) : null,
         },
       ]);
 

@@ -20,45 +20,62 @@ export default function UploadPage() {
   }, []);
 
   const handleUpload = async () => {
-    if (!file || !sellPrice || !buyOffer) {
-      alert("Please complete all fields.");
-      return;
-    }
+  if (!file || !sellPrice || !buyOffer) {
+    alert("Please complete all fields.");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const { imageUrl } = await uploadRes.json();
+  try {
+    // Step 1: Upload image to Cloudinary
+    const formData = new FormData();
+    formData.append("image", file);
+    const uploadRes = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const { imageUrl } = await uploadRes.json();
 
-      const embedding = await getEmbeddingFromFile(file);
+    // Step 2: Generate embedding from uploaded image
+    const embedding = await getEmbeddingFromFile(file);
 
-      const payload = {
-  imageUrl,
-  embedding,
-  userId: session?.user?.id || null,
-  price: parseFloat(sellPrice),
-  buy_offer: parseFloat(buyOffer),
+    // Step 3: Save sock record in Supabase
+    const payload = {
+      imageUrl,
+      embedding,
+      userId: session?.user?.id || null,
+      price: parseFloat(sellPrice),
+      buy_offer: parseFloat(buyOffer),
+    };
+
+    await axios.post("/api/save-sock", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    // Step 4: Get top matches via pgvector-based RPC
+    const matchRes = await fetch("/api/get-socks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embedding }),
+    });
+    const { matches } = await matchRes.json();
+
+    // Step 5: Store everything for use in results page
+    localStorage.setItem(
+      "sockUpload",
+      JSON.stringify({ ...payload, matches })
+    );
+
+    // Step 6: Redirect to results
+    router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert("Upload failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
 };
-
-      await axios.post("/api/save-sock", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      localStorage.setItem("sockUpload", JSON.stringify(payload));
-      router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="p-8 max-w-xl mx-auto text-center">

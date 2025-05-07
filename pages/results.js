@@ -6,7 +6,7 @@ import { useSupabaseSession } from "@/context/SupabaseContext";
 import LoginPrompt from "@/components/LoginPrompt";
 
 export default function ResultsPage() {
-  const { session } = useSupabaseSession();
+  const { session } = useSupabaseSession() || {}; // <- SAFE DEFAULT
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

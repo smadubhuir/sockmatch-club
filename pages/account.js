@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSupabaseSession } from "../context/SupabaseContext";
 import { supabase } from "../lib/supabaseClient";
+import Toast from "../components/Toast";
 
 export default function AccountPage() {
   const { session, loading: sessionLoading } = useSupabaseSession();
@@ -10,6 +11,7 @@ export default function AccountPage() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatar, setAvatar] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (!session) return;
@@ -24,11 +26,13 @@ export default function AccountPage() {
           .single();
 
         if (error) throw error;
-
-        setUsername(data.username || "");
-        setBio(data.bio || "");
-        setAvatar(data.avatar_url || "");
+        if (data) {
+          setUsername(data.username || "");
+          setBio(data.bio || "");
+          setAvatar(data.avatar_url || "");
+        }
       } catch (err) {
+        setToast("Failed to fetch profile.");
         console.error("Failed to fetch profile:", err);
       } finally {
         setLoading(false);
@@ -41,23 +45,56 @@ export default function AccountPage() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      await supabase.from("profiles").upsert({
+
+      const updates = {
         id: session.user.id,
         username,
         bio,
-        avatar_url: avatar
-      });
-      alert("Profile updated!");
+        avatar_url: avatar || null,
+      };
+
+      const { error } = await supabase.from("profiles").upsert(updates);
+      if (error) throw error;
+
+      setToast("Profile updated successfully!");
     } catch (err) {
+      setToast("Failed to save profile.");
       console.error("Failed to save profile:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    if (file) setAvatar(URL.createObjectURL(file));
+    if (!file) return;
+
+    try {
+      setLoading(true);
+
+      // Upload to Cloudinary with your credentials
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "sockmatch_avatars");
+
+      const res = await fetch("https://api.cloudinary.com/v1_1/dilhl61st/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setAvatar(data.secure_url);
+        setToast("Profile picture updated!");
+      } else {
+        throw new Error("Failed to upload image.");
+      }
+    } catch (err) {
+      setToast("Failed to upload profile picture.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (sessionLoading) return <p>Loading session...</p>;
@@ -68,7 +105,11 @@ export default function AccountPage() {
       <h1 className="text-2xl font-bold mb-4">My Account</h1>
 
       <label className="block mb-2">Profile Picture</label>
-      {avatar ? <img src={avatar} alt="Avatar" className="w-32 h-32 rounded-full mb-4" /> : <p>No image</p>}
+      {avatar ? (
+        <img src={avatar} alt="Avatar" className="w-32 h-32 rounded-full mb-4" />
+      ) : (
+        <p>No image</p>
+      )}
 
       <input type="file" accept="image/*" onChange={handleAvatarChange} className="mb-4" />
 
@@ -94,6 +135,8 @@ export default function AccountPage() {
       >
         {loading ? "Saving..." : "Save Changes"}
       </button>
+
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
     </div>
   );
 }

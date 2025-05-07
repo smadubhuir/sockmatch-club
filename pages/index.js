@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import LoginPrompt from "@/components/LoginPrompt";
 
 export default function HomePage() {
   const [socks, setSocks] = useState([]);
@@ -56,33 +57,38 @@ export default function HomePage() {
      
       <h2 className="text-2xl font-semibold mt-12">Socks Seeking Matches:</h2>
 
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {loading ? (
-            <p className="col-span-full text-gray-400">Loading socks...</p>
-          ) : socks.length > 0 ? (
-            socks.map((sock, index) => (
-              <div 
-                key={index} 
-                className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center justify-center"
-              >
-                <img 
-                  src={sock.image_url || "/placeholder.png"} 
-                  alt="Sock" 
-                  className="w-40 h-40 object-cover rounded-md mb-2"
-                />
-                <p className="text-sm text-gray-700 text-center w-full break-words">
-                  {sock.name || "Unnamed Sock"}
-                </p>
-              </div>
-            ))
+<div className="w-full max-w-4xl mx-auto">
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+    {loading ? (
+      <p className="col-span-full text-gray-400">Loading socks...</p>
+    ) : socks.length > 0 ? (
+      socks.map((sock, index) => (
+        <div key={index} className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center justify-center">
+          <img 
+            src={sock.image_url || "/placeholder.png"} 
+            alt="Sock" 
+            className="w-40 h-40 object-cover rounded-md mb-2"
+          />
+          <p className="text-sm text-gray-700 text-center w-full break-words">
+            {sock.name || "Unnamed Sock"}
+          </p>
+          {session ? (
+            <button className="mt-2 bg-blue-500 text-white px-4 py-1 rounded">
+              Make an Offer
+            </button>
           ) : (
-            <p className="text-gray-500 col-span-full text-center">
-              No socks uploaded yet.
-            </p>
+            <LoginPrompt action="make an offer on this sock" />
           )}
         </div>
-      </div>
+      ))
+    ) : (
+      <p className="text-gray-500 col-span-full text-center">
+        No socks uploaded yet.
+      </p>
+    )}
+  </div>
+</div>
+
 
       <div className="flex space-x-4 mt-8">
         <Link href="/browse">

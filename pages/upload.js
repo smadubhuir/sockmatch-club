@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import axios from "axios";
 import { useSupabaseSession } from "../context/SupabaseContext";
 import { getEmbeddingFromFile, loadMobilenet } from "@/lib/mobilenet";
+import LoginPrompt from "@/components/LoginPrompt";
 
 export default function UploadPage() {
   const [file, setFile] = useState(null);

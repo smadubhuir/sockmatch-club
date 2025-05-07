@@ -17,27 +17,27 @@ export default function AccountPage() {
     if (!session) return;
 
     const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("username, bio, avatar_url")
-          .eq("id", session.user.id)
-          .single();
+  try {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, bio, avatar_url")
+      .eq("id", session.user.id)
+      .single();
 
-        if (error) throw error;
-        if (data) {
-          setUsername(data.username || "");
-          setBio(data.bio || "");
-          setAvatar(data.avatar_url || "");
-        }
-      } catch (err) {
-        setToast("Failed to fetch profile.");
-        console.error("Failed to fetch profile:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (error) throw error;
+    if (data) {
+      setUsername(data.username || "");
+      setBio(data.bio || "");
+      setAvatar(data.avatar_url || "");
+    }
+  } catch (err) {
+    setToast("Failed to fetch profile.");
+    console.error("Failed to fetch profile:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchProfile();
   }, [session]);

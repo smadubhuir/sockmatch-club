@@ -16,10 +16,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
-    return res.status(200).json(data);
+    console.log("Fetched socks data:", data);
+    return res.status(200).json({ socks: data }); // <-- Returning in { socks: [...] } format
   } catch (err) {
     console.error("Unexpected error:", err);
     return res.status(500).json({ error: "Unexpected error: " + err.message });
   }
 }
-

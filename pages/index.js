@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchSocks = async () => {
       try {
-        const res = await fetch("/api/get-socks");
+        const res = await fetch("/api/list-socks");
         const data = await res.json();
         console.log("Fetched socks:", data);
 

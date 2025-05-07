@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSupabaseSession } from "../context/SupabaseContext";
+import Toast from "../components/Toast";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -13,23 +14,33 @@ export default function Signup() {
   const router = useRouter();
   const { session } = useSupabaseSession();
 
+  // Handle Signup
   const handleSignup = async (e) => {
     e.preventDefault();
     const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      alert(error.message);
+      setToast(error.message);
     } else {
-      setToast("Account created! Check email to confirm.");
+      setToast("Account created! Check your email to confirm.");
       setTimeout(() => {
         router.push("/login");
-      }, 2000);
+      }, 3000);
     }
   };
 
+  // Redirect if already logged in
   if (session) {
-    router.push("/browse");
-    return null;
+    setToast("You are already logged in!");
+    setTimeout(() => router.push("/browse"), 2000);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-6 rounded shadow-md w-80 text-center">
+          <h2 className="text-2xl mb-4 font-bold">Redirecting...</h2>
+        </div>
+        {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      </div>
+    );
   }
 
   return (
@@ -70,9 +81,7 @@ export default function Signup() {
         </p>
 
         {toast && (
-          <div className="bg-green-100 text-green-800 mt-4 p-2 rounded text-center">
-            {toast}
-          </div>
+          <Toast message={toast} onClose={() => setToast(null)} />
         )}
       </form>
     </div>

@@ -13,7 +13,7 @@ export default function UploadPage() {
   const [buyOffer, setBuyOffer] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { session } = useSupabaseSession();
+  const { session, loading: sessionLoading } = useSupabaseSession();
 
   // Preload MobileNet on page load
   useEffect(() => {
@@ -21,62 +21,79 @@ export default function UploadPage() {
   }, []);
 
   const handleUpload = async () => {
-  if (!file || !sellPrice || !buyOffer) {
-    alert("Please complete all fields.");
-    return;
-  }
+    if (!file || !sellPrice || !buyOffer) {
+      alert("Please complete all fields.");
+      return;
+    }
 
-  setLoading(true);
+    if (sessionLoading) {
+      alert("Session is still loading. Please wait.");
+      return;
+    }
 
-  try {
-    // Step 1: Upload image to Cloudinary
-    const formData = new FormData();
-    formData.append("image", file);
-    const uploadRes = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const { imageUrl } = await uploadRes.json();
+    setLoading(true);
 
-    // Step 2: Generate embedding from uploaded image
-    const embedding = await getEmbeddingFromFile(file);
+    try {
+      // Step 1: Upload image to Cloudinary
+      const formData = new FormData();
+      formData.append("image", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Step 3: Save sock record in Supabase
-    const payload = {
-      imageUrl,
-      embedding,
-      userId: session?.user?.id || null,
-      price: parseFloat(sellPrice),
-      buy_offer: parseFloat(buyOffer),
-    };
+      const { imageUrl } = await uploadRes.json();
+      if (!imageUrl) throw new Error("Failed to upload image.");
 
-    await axios.post("/api/save-sock", payload, {
-      headers: { "Content-Type": "application/json" },
-    });
+      // Step 2: Generate embedding from uploaded image
+      const embedding = await getEmbeddingFromFile(file);
 
-    // Step 4: Get top matches via pgvector-based RPC
-    const matchRes = await fetch("/api/get-socks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embedding }),
-    });
-    const { matches } = await matchRes.json();
+      // Step 3: Save sock record in Supabase
+      const payload = {
+        imageUrl,
+        embedding,
+        userId: session?.user?.id || null,
+        price: parseFloat(sellPrice),
+        buy_offer: parseFloat(buyOffer),
+      };
 
-    // Step 5: Store everything for use in results page
-    localStorage.setItem(
-      "sockUpload",
-      JSON.stringify({ ...payload, matches })
+      await axios.post("/api/save-sock", payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      // Step 4: Get top matches via pgvector-based RPC
+      const matchRes = await fetch("/api/get-socks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedding }),
+      });
+
+      const { matches } = await matchRes.json();
+      if (!matches) throw new Error("Failed to retrieve matches.");
+
+      // Step 5: Store everything for use in results page
+      localStorage.setItem(
+        "sockUpload",
+        JSON.stringify({ ...payload, matches })
+      );
+
+      // Step 6: Redirect to results
+      router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Upload failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sessionLoading) {
+    return (
+      <div className="p-8 max-w-xl mx-auto text-center">
+        <h1 className="text-2xl font-bold mb-6">Loading session, please wait...</h1>
+      </div>
     );
-
-    // Step 6: Redirect to results
-    router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
-  } catch (err) {
-    console.error("Upload error:", err);
-    alert("Upload failed. Please try again.");
-  } finally {
-    setLoading(false);
   }
-};
 
   return (
     <div className="p-8 max-w-xl mx-auto text-center">
@@ -125,12 +142,18 @@ export default function UploadPage() {
 
         <button
           onClick={handleUpload}
-          disabled={loading}
+          disabled={loading || sessionLoading}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
         >
           {loading ? "Uploading Sock..." : "Upload Sock"}
         </button>
       </div>
+
+      {!session && !sessionLoading && (
+        <div className="mt-4">
+          <LoginPrompt action="upload a sock" />
+        </div>
+      )}
     </div>
   );
 }

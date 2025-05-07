@@ -1,8 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -12,25 +11,39 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { session } = useSupabaseSession();
+  const { session, loading: sessionLoading } = useSupabaseSession(); // Safe session reference
+
+  useEffect(() => {
+    if (session && !sessionLoading) {
+      router.push("/browse");
+    }
+  }, [session, sessionLoading, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) {
-      alert(error.message);
-    } else {
-      router.push("/browse");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        alert(error.message);
+      } else {
+        router.push("/browse");
+      }
+    } catch (err) {
+      alert("Login failed: " + err.message);
     }
   };
 
-  if (session) {
-    router.push("/browse");
-    return null;
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-xl">Loading, please wait...</p>
+      </div>
+    );
   }
 
   return (

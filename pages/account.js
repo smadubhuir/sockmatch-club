@@ -16,30 +16,26 @@ export default function AccountPage() {
   useEffect(() => {
     if (!session) return;
 
-    const fetchProfile = async () => {
-  try {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username, bio, avatar_url")
-      .eq("id", session.user.id)
-      .single();
+    const ensureProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/get-profile?user_id=${session.user.id}`);
+        const { profile } = await response.json();
 
-    if (error) throw error;
-    if (data) {
-      setUsername(data.username || "");
-      setBio(data.bio || "");
-      setAvatar(data.avatar_url || "");
-    }
-  } catch (err) {
-    setToast("Failed to fetch profile.");
-    console.error("Failed to fetch profile:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+        if (profile) {
+          setUsername(profile.username || "");
+          setBio(profile.bio || "");
+          setAvatar(profile.avatar_url || "");
+        }
+      } catch (err) {
+        setToast("Failed to ensure profile.");
+        console.error("Failed to ensure profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    fetchProfile();
+    ensureProfile();
   }, [session]);
 
   const handleSave = async () => {
@@ -72,7 +68,7 @@ export default function AccountPage() {
     try {
       setLoading(true);
 
-      // Upload to Cloudinary with your credentials
+      // Upload to Cloudinary (Replace with your Cloudinary setup)
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", "sockmatch_avatars");

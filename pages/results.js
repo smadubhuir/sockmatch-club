@@ -6,7 +6,7 @@ import { useSupabaseSession } from "@/context/SupabaseContext";
 import LoginPrompt from "@/components/LoginPrompt";
 
 export default function ResultsPage() {
-  const { session } = useSupabaseSession() || {}; // <- SAFE DEFAULT
+  const { session } = useSupabaseSession() || {}; // Safe default
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,6 +14,8 @@ export default function ResultsPage() {
   const { imageUrl } = router.query;
 
   useEffect(() => {
+    if (typeof window === "undefined") return; // Ensure client-side
+
     const data = localStorage.getItem("sockUpload");
     if (!data) {
       setLoading(false);

@@ -2,13 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useSupabaseSession } from "@/context/SupabaseContext";
 import LoginPrompt from "@/components/LoginPrompt";
 
 export default function ResultsPage() {
-  const [imageUrl, setImageUrl] = useState(null);
+  const { session } = useSupabaseSession();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const router = useRouter();
+  const { imageUrl } = router.query;
 
   useEffect(() => {
     const data = localStorage.getItem("sockUpload");
@@ -19,10 +22,10 @@ export default function ResultsPage() {
 
     try {
       const { imageUrl, matches } = JSON.parse(data);
-      setImageUrl(imageUrl);
       setMatches(matches || []);
     } catch (err) {
       console.error("Error parsing sockUpload data:", err);
+      setError("Could not load matches.");
     } finally {
       setLoading(false);
     }
@@ -42,48 +45,32 @@ export default function ResultsPage() {
 
       {loading && <p className="text-blue-500">Finding matches...</p>}
 
-      {!session && (
-  <LoginPrompt action="claim or contact a sock owner" className="mt-6" />
-)}
-
-{!loading && matches.length > 0 && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-    {matches.map((match, index) => (
-      <div key={index} className="border p-4 rounded shadow">
-        <img
-          src={match.image_url || match.imageUrl}
-          alt={`Match ${index + 1}`}
-          className="w-32 mx-auto rounded"
-        />
-        <p className="font-bold mt-2">
-          SockRank: {(match.similarity * 100).toFixed(2)}%
-        </p>
-        {session ? (
-          <button className="mt-2 bg-blue-500 text-white px-4 py-1 rounded">
-            Claim this sock
-          </button>
-        ) : (
-          <LoginPrompt action="claim this sock" />
-        )}
-      </div>
-    ))}
-  </div>
-)}
-
+      {!loading && matches.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {matches.map((match, index) => (
+            <div key={index} className="border p-4 rounded shadow">
+              <img
+                src={match.image_url || match.imageUrl}
+                alt={`Match ${index + 1}`}
+                className="w-32 mx-auto rounded"
+              />
+              <p className="font-bold mt-2">
+                SockRank: {(match.similarity * 100).toFixed(2)}%
+              </p>
+              {session ? (
+                <button className="mt-2 bg-blue-500 text-white px-4 py-1 rounded">
+                  Claim this sock
+                </button>
+              ) : (
+                <LoginPrompt action="claim this sock" />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {!loading && matches.length === 0 && (
         <p className="text-gray-500">No matches found.</p>
-      )}
-
-      {!loading && (
-        <div className="mt-8">
-          <a
-            href="/browse"
-            className="inline-block bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300"
-          >
-            Browse More Socks
-          </a>
-        </div>
       )}
     </div>
   );

@@ -6,7 +6,7 @@ import { useSupabaseSession } from "@/context/SupabaseContext";
 import LoginPrompt from "@/components/LoginPrompt";
 
 export default function ResultsPage() {
-  const { session } = useSupabaseSession() || {}; // Safe default
+  const { session, loading: sessionLoading } = useSupabaseSession(); // Use loading from context
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +33,15 @@ export default function ResultsPage() {
     }
   }, []);
 
+  if (sessionLoading || loading) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto text-center">
+        <h1 className="text-2xl font-bold mb-4">Your Sock Matches</h1>
+        <p className="text-blue-500">Loading, please wait...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 max-w-4xl mx-auto text-center">
       <h1 className="text-2xl font-bold mb-4">Your Sock Matches</h1>
@@ -45,9 +54,9 @@ export default function ResultsPage() {
         />
       )}
 
-      {loading && <p className="text-blue-500">Finding matches...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
-      {!loading && matches.length > 0 && (
+      {matches.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {matches.map((match, index) => (
             <div key={index} className="border p-4 rounded shadow">
@@ -69,9 +78,7 @@ export default function ResultsPage() {
             </div>
           ))}
         </div>
-      )}
-
-      {!loading && matches.length === 0 && (
+      ) : (
         <p className="text-gray-500">No matches found.</p>
       )}
     </div>

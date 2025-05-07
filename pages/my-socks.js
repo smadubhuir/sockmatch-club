@@ -1,81 +1,58 @@
-import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
+"use client";
 
-export async function getServerSideProps(ctx) {
-  const supabase = createSupabaseServerClient(ctx);
+import { useEffect, useState } from "react";
+import { useSupabaseSession } from "../context/SupabaseContext";
+import axios from "axios";
+import Link from "next/link";
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+export default function MySocksPage() {
+  const { session, loading: sessionLoading } = useSupabaseSession();
+  const [socks, setSocks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
+  useEffect(() => {
+    if (!session) return;
+
+    const fetchMySocks = async () => {
+      try {
+        const { data } = await axios.get(`/api/list-socks?user=${session.user.id}`);
+        setSocks(data.socks);
+      } catch (err) {
+        console.error("Failed to fetch socks:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-  }
 
-  const { data: socks, error } = await supabase
-    .from("socks")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .order("created_at", { ascending: false });
+    fetchMySocks();
+  }, [session]);
 
-  return {
-    props: {
-      user: session.user,
-      socks: socks || [],
-    },
-  };
-}
-
-export default function MySocksPage({ user, socks }) {
-  const handleDelete = async (sockId) => {
-    const confirmed = window.confirm("Are you sure you want to delete this sock?");
-    if (!confirmed) return;
-
-    const res = await fetch("/api/delete-sock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: sockId }),
-    });
-
-    if (!res.ok) {
-      alert("Failed to delete sock.");
-    } else {
-      window.location.reload(); // simple refresh
-    }
-  };
+  if (sessionLoading) return <p>Loading session...</p>;
+  if (!session) return <p>Please log in to see your socks.</p>;
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        {user.email}'s Uploaded Socks
-      </h1>
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">My Uploaded Socks</h1>
 
-      {socks.length === 0 ? (
-        <p className="text-center">You haven't uploaded any socks yet!</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {socks.map((sock) => (
-            <div key={sock.id} className="border p-4 rounded shadow">
-              <img
-                src={sock.image_url}
-                alt="Sock"
-                className="w-full h-48 object-cover rounded mb-4"
-              />
-              <p>Uploaded on: {new Date(sock.created_at).toLocaleDateString()}</p>
-              <button
-                onClick={() => handleDelete(sock.id)}
-                className="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded"
-              >
-                Delete Sock
-              </button>
+      {loading ? (
+        <p>Loading your socks...</p>
+      ) : socks.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {socks.map((sock, index) => (
+            <div key={index} className="border p-4 rounded shadow">
+              <img src={sock.image_url} alt="Sock" className="w-32 mx-auto" />
+              <p>{sock.name || "Unnamed Sock"}</p>
             </div>
           ))}
         </div>
+      ) : (
+        <p>No socks uploaded yet.</p>
       )}
+
+      <Link href="/upload" className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">
+        Upload a New Sock
+      </Link>
     </div>
   );
 }
+

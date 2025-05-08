@@ -1,159 +1,98 @@
+// pages/upload.js
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/router";
-import axios from "axios";
-import { useSupabaseSession } from "../context/SupabaseContext";
-import { getEmbeddingFromFile, loadMobilenet } from "@/lib/mobilenet";
-import LoginPrompt from "@/components/LoginPrompt";
+import OptimizedImage from "@/components/OptimizedImage";
 
 export default function UploadPage() {
-  const [file, setFile] = useState(null);
-  const [sellPrice, setSellPrice] = useState("");
-  const [buyOffer, setBuyOffer] = useState("");
+  const [sockImage, setSockImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const router = useRouter();
-  const { session, loading: sessionLoading } = useSupabaseSession();
 
-  // Preload MobileNet on page load
-  useEffect(() => {
-    loadMobilenet().catch(console.error);
-  }, []);
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSockImage(URL.createObjectURL(file));
+    }
+  };
 
   const handleUpload = async () => {
-    if (!file || !sellPrice || !buyOffer) {
-      alert("Please complete all fields.");
+    if (!sockImage) {
+      setToast("Please choose an image.");
       return;
     }
-
-    if (sessionLoading) {
-      alert("Session is still loading. Please wait.");
-      return;
-    }
-
-    setLoading(true);
 
     try {
-      // Step 1: Upload image to Cloudinary
+      setLoading(true);
+
+      // Upload to Cloudinary with automatic resizing and compression
       const formData = new FormData();
-      formData.append("image", file);
-      const uploadRes = await fetch("/api/upload", {
+      formData.append("file", document.querySelector("#sock-file").files[0]);
+      formData.append("upload_preset", "sockmatch_avatars"); // Use your Cloudinary upload preset
+      formData.append("transformation", "w_600,h_600,c_fill,q_auto:good,f_auto");
+
+      const res = await fetch("https://api.cloudinary.com/v1_1/dilhl61st/image/upload", {
         method: "POST",
         body: formData,
       });
 
-      const { imageUrl } = await uploadRes.json();
-      if (!imageUrl) throw new Error("Failed to upload image.");
+      const data = await res.json();
+      if (data.secure_url) {
+        // Save the image URL to Supabase (or any other metadata)
+        const { error } = await supabase.from("socks").insert({
+          image_url: data.secure_url,
+          user_id: supabase.auth.user().id,
+        });
 
-      // Step 2: Generate embedding from uploaded image
-      const embedding = await getEmbeddingFromFile(file);
+        if (error) throw error;
 
-      // Step 3: Save sock record in Supabase
-      const payload = {
-        imageUrl,
-        embedding,
-        userId: session?.user?.id || null,
-        price: parseFloat(sellPrice),
-        buy_offer: parseFloat(buyOffer),
-      };
-
-      await axios.post("/api/save-sock", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      // Step 4: Get top matches via pgvector-based RPC
-      const matchRes = await fetch("/api/get-socks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ embedding }),
-      });
-
-      const { matches } = await matchRes.json();
-      if (!matches) throw new Error("Failed to retrieve matches.");
-
-      // Step 5: Store everything for use in results page
-      localStorage.setItem(
-        "sockUpload",
-        JSON.stringify({ ...payload, matches })
-      );
-
-      // Step 6: Redirect to results
-      router.push(`/results?imageUrl=${encodeURIComponent(imageUrl)}`);
+        setToast("Sock uploaded successfully!");
+        setTimeout(() => router.push("/browse"), 1500);
+      } else {
+        throw new Error("Failed to upload image.");
+      }
     } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed: " + err.message);
+      setToast("Failed to upload sock.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (sessionLoading) {
-    return (
-      <div className="p-8 max-w-xl mx-auto text-center">
-        <h1 className="text-2xl font-bold mb-6">Loading session, please wait...</h1>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-8 max-w-xl mx-auto text-center">
-      <h1 className="text-2xl font-bold mb-6">Upload Your Sock</h1>
+    <div className="p-8 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Upload Your Sock</h1>
+      
+      <input 
+        type="file" 
+        id="sock-file" 
+        accept="image/*" 
+        onChange={handleImageChange} 
+        className="mb-4"
+      />
 
-      <div className="space-y-4">
-        <div>
-          <label className="block mb-2 font-semibold">Choose your sock image:</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-2 font-semibold">
-            If someone wants to buy this sock, how much would you sell it for? (USD)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={sellPrice}
-            onChange={(e) => setSellPrice(e.target.value)}
-            placeholder="e.g., 5.00"
-            className="w-full border rounded p-2"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-2 font-semibold">
-            If you found a match for this sock, how much would you pay for it? (USD)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={buyOffer}
-            onChange={(e) => setBuyOffer(e.target.value)}
-            placeholder="e.g., 3.00"
-            className="w-full border rounded p-2"
-          />
-        </div>
-
-        <button
-          onClick={handleUpload}
-          disabled={loading || sessionLoading}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-        >
-          {loading ? "Uploading Sock..." : "Upload Sock"}
-        </button>
-      </div>
-
-      {!session && !sessionLoading && (
-        <div className="mt-4">
-          <LoginPrompt action="upload a sock" />
-        </div>
+      {sockImage && (
+        <OptimizedImage 
+          src={sockImage} 
+          alt="Sock Preview" 
+          width={200} 
+          height={200} 
+          className="rounded-md mb-4"
+        />
       )}
+
+      <button 
+        onClick={handleUpload} 
+        disabled={loading} 
+        className="bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        {loading ? "Uploading..." : "Upload Sock"}
+      </button>
+
+      {toast && <div className="mt-4 text-red-500">{toast}</div>}
     </div>
   );
 }

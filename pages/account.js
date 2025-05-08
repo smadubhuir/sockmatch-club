@@ -1,3 +1,4 @@
+// pages/account.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,32 +17,35 @@ export default function AccountPage() {
   useEffect(() => {
     if (!session) return;
 
-    const ensureProfile = async () => {
+    const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/get-profile?user_id=${session.user.id}`);
-        const { profile } = await response.json();
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("username, bio, avatar_url")
+          .eq("id", session.user.id)
+          .single();
 
-        if (profile) {
-          setUsername(profile.username || "");
-          setBio(profile.bio || "");
-          setAvatar(profile.avatar_url || "");
+        if (error) throw error;
+        if (data) {
+          setUsername(data.username || "");
+          setBio(data.bio || "");
+          setAvatar(data.avatar_url || "");
         }
       } catch (err) {
-        setToast("Failed to ensure profile.");
-        console.error("Failed to ensure profile:", err);
+        setToast("Failed to fetch profile.");
+        console.error("Failed to fetch profile:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    ensureProfile();
+    fetchProfile();
   }, [session]);
 
   const handleSave = async () => {
     try {
       setLoading(true);
-
       const updates = {
         id: session.user.id,
         username,
@@ -61,36 +65,9 @@ export default function AccountPage() {
     }
   };
 
-  const handleAvatarChange = async (e) => {
+  const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      setLoading(true);
-
-      // Upload to Cloudinary (Replace with your Cloudinary setup)
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "sockmatch_avatars");
-
-      const res = await fetch("https://api.cloudinary.com/v1_1/dilhl61st/image/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (data.secure_url) {
-        setAvatar(data.secure_url);
-        setToast("Profile picture updated!");
-      } else {
-        throw new Error("Failed to upload image.");
-      }
-    } catch (err) {
-      setToast("Failed to upload profile picture.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    if (file) setAvatar(URL.createObjectURL(file));
   };
 
   if (sessionLoading) return <p>Loading session...</p>;

@@ -12,45 +12,28 @@ export default async function handler(req, res) {
   }
 
   const supabase = supabaseServer();
-
+  
   try {
     // Fetch the user's profile
     const { data, error } = await supabase
       .from("profiles")
-      .select("avatar_url")
+      .select("*")
       .eq("id", user_id)
       .single();
 
-    if (error) throw error;
-
-    // If profile does not exist, create it
+    // If the profile does not exist, create it
     if (!data) {
       const { error: insertError } = await supabase
         .from("profiles")
-        .insert({ id: user_id, avatar_url: "/default-avatar.png" });
+        .insert({ id: user_id });
 
       if (insertError) throw insertError;
 
-      return res.status(201).json({ message: "Profile created", profile: { id: user_id, avatar_url: "/default-avatar.png" } });
+      return res.status(201).json({ message: "Profile created", profile: { id: user_id } });
     }
 
-    // Debugging: Check Avatar URL
-    console.log("Fetched Avatar URL:", data.avatar_url);
-
-    // Validate Avatar URL
-    const isValidUrl = (url) => {
-      try {
-        new URL(url);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    // If avatar URL is invalid, replace with default
-    const avatarUrl = isValidUrl(data.avatar_url) ? data.avatar_url : "/default-avatar.png";
-
-    return res.status(200).json({ profile: { id: user_id, avatar_url: avatarUrl } });
+    // If the profile exists, return it
+    return res.status(200).json({ profile: data });
   } catch (err) {
     console.error("Error in get-profile API:", err);
     return res.status(500).json({ error: "Server error" });

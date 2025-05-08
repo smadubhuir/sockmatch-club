@@ -12,24 +12,26 @@ export default async function handler(req, res) {
   }
 
   const supabase = supabaseServer();
-  
+
   try {
     // Fetch the user's profile
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("avatar_url")
       .eq("id", user_id)
       .single();
 
-    // If the profile does not exist, create it
+    if (error) throw error;
+
+    // If profile does not exist, create it
     if (!data) {
       const { error: insertError } = await supabase
         .from("profiles")
-        .insert({ id: user_id });
+        .insert({ id: user_id, avatar_url: "/default-avatar.png" });
 
       if (insertError) throw insertError;
 
-      return res.status(201).json({ message: "Profile created", profile: { id: user_id } });
+      return res.status(201).json({ message: "Profile created", profile: { id: user_id, avatar_url: "/default-avatar.png" } });
     }
 
     // If the profile exists, return it
@@ -39,4 +41,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Server error" });
   }
 }
-

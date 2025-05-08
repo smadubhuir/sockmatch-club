@@ -1,3 +1,4 @@
+// context/SupabaseContext.js
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -9,10 +10,10 @@ const SupabaseContext = createContext();
 // Supabase Provider Component
 export const SupabaseProvider = ({ children }) => {
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true); // Loading state to avoid flicker
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // Client-side guard
+    if (typeof window === "undefined") return; // Prevents running on server side
 
     const initializeSession = async () => {
       try {
@@ -21,13 +22,12 @@ export const SupabaseProvider = ({ children }) => {
       } catch (error) {
         console.error("Error getting session:", error);
       } finally {
-        setLoading(false); // Only stops loading after session is checked
+        setLoading(false);
       }
     };
 
     initializeSession();
 
-    // Set up session listener
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -35,12 +35,17 @@ export const SupabaseProvider = ({ children }) => {
     );
 
     return () => {
-      listener.subscription?.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
   }, []);
 
+  // Avoid flickering by showing a loading state
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
   return (
-    <SupabaseContext.Provider value={{ session, supabase, loading }}>
+    <SupabaseContext.Provider value={{ session, supabase }}>
       {children}
     </SupabaseContext.Provider>
   );

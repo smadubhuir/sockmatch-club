@@ -34,8 +34,23 @@ export default async function handler(req, res) {
       return res.status(201).json({ message: "Profile created", profile: { id: user_id, avatar_url: "/default-avatar.png" } });
     }
 
-    // If the profile exists, return it
-    return res.status(200).json({ profile: data });
+    // Debugging: Check Avatar URL
+    console.log("Fetched Avatar URL:", data.avatar_url);
+
+    // Validate Avatar URL
+    const isValidUrl = (url) => {
+      try {
+        new URL(url);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    // If avatar URL is invalid, replace with default
+    const avatarUrl = isValidUrl(data.avatar_url) ? data.avatar_url : "/default-avatar.png";
+
+    return res.status(200).json({ profile: { id: user_id, avatar_url: avatarUrl } });
   } catch (err) {
     console.error("Error in get-profile API:", err);
     return res.status(500).json({ error: "Server error" });

@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
+import SockCard from "./SockCard";
 
 export default function BrowsePage() {
   const [matches, setMatches] = useState([]);
@@ -56,50 +57,24 @@ export default function BrowsePage() {
     <div className="p-8 max-w-6xl mx-auto text-center">
       <h1 className="text-3xl font-bold mb-6">Find Your Sock Match</h1>
 
-      {imageUrl && (
-        <div className="mb-6">
-          <img src={imageUrl} alt="Uploaded Sock" className="w-48 mx-auto rounded-lg border" />
-        </div>
-      )}
+      {imageUrl && <img src={imageUrl} alt="Uploaded Sock" className="w-48 mx-auto rounded-lg border mb-6" />}
 
-      {!user && (
-        <div className="text-red-600 font-bold">
-          Please <a href="/login" className="underline">sign in</a> to view matches.
-        </div>
-      )}
-
-      {user && loading && (
+      {user && loading ? (
         <p className="text-blue-500 text-lg">Finding matches for you...</p>
-      )}
-
-      {user && error && (
+      ) : error ? (
         <p className="text-red-500 text-lg">{error}</p>
-      )}
-
-      {user && !loading && matches.length > 0 && (
+      ) : matches.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-          {matches.map((match, index) => (
-            <div key={index} className="border p-4 rounded-lg shadow-sm bg-white hover:shadow-md transition">
-              <img src={match.imageUrl} alt={`Match ${index + 1}`} className="w-32 mx-auto rounded" />
-              <div className="mt-4">
-                <p className="font-semibold">SockRank: {(match.similarity * 100).toFixed(1)}%</p>
-              </div>
-            </div>
+          {matches.map((sock, index) => (
+            <SockCard key={index} sock={sock} />
           ))}
         </div>
-      )}
-
-      {user && !loading && matches.length === 0 && (
+      ) : (
         <p className="text-gray-500 text-lg mt-6">No matching socks found yet. Try uploading another sock!</p>
       )}
 
       <div className="mt-8">
-        <a
-          href="/upload"
-          className="inline-block bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
-        >
-          Upload Another Sock
-        </a>
+        <a href="/upload" className="inline-block bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition">Upload Another Sock</a>
       </div>
     </div>
   );

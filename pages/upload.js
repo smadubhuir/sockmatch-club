@@ -1,4 +1,3 @@
-// pages/upload.js
 "use client";
 
 import { useState } from "react";
@@ -28,11 +27,11 @@ export default function UploadPage() {
     try {
       setLoading(true);
 
-      // Upload to Cloudinary with automatic resizing and compression
+      const file = document.querySelector("#sock-file").files[0];
       const formData = new FormData();
-      formData.append("file", document.querySelector("#sock-file").files[0]);
-      formData.append("upload_preset", "sockmatch_avatars"); // Use your Cloudinary upload preset
-      formData.append("transformation", "w_600,h_600,c_fill,q_auto:good,f_auto");
+      formData.append("file", file);
+      formData.append("upload_preset", "sockmatch_socks"); // Use the dedicated Cloudinary preset
+      formData.append("folder", "sockmatch/socks"); // Ensure images go to the right folder
 
       const res = await fetch("https://api.cloudinary.com/v1_1/dilhl61st/image/upload", {
         method: "POST",
@@ -40,11 +39,21 @@ export default function UploadPage() {
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(`Cloudinary Upload Error: ${data.error?.message || "Unknown error"}`);
+      }
+
       if (data.secure_url) {
         // Save the image URL to Supabase (or any other metadata)
+        const user = supabase.auth.user();
+        if (!user) {
+          setToast("You must be logged in to upload.");
+          return;
+        }
+
         const { error } = await supabase.from("socks").insert({
           image_url: data.secure_url,
-          user_id: supabase.auth.user().id,
+          user_id: user.id,
         });
 
         if (error) throw error;
@@ -56,7 +65,7 @@ export default function UploadPage() {
       }
     } catch (err) {
       setToast("Failed to upload sock.");
-      console.error(err);
+      console.error("Upload Error:", err);
     } finally {
       setLoading(false);
     }

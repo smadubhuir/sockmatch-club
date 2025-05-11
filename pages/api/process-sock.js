@@ -1,50 +1,40 @@
-import { exec } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+// /pages/api/process-sock.js
+import * as tf from "@tensorflow/tfjs-node";
+import mobilenet from "@tensorflow-models/mobilenet";
+import { createCanvas, loadImage } from "canvas";
 
-// Utility function to wrap exec in a Promise
-function execPromise(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) reject(stderr || stdout || error);
-      else resolve(stdout);
-    });
-  });
-}
-
+// Fast In-Memory Embedding Generation
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   const { imageUrl } = req.body;
+  if (!imageUrl) {
+    return res.status(400).json({ error: "Image URL is required." });
+  }
 
   try {
-    const projectRoot = process.cwd();
-    const pipelineScript = path.join(projectRoot, 'lib', 'imageProcessing', 'sock_pipeline.py');
-    const embeddingOutput = path.join(projectRoot, 'lib', 'imageProcessing', 'embeddings', 'api_embedding.json');
+    // Load the image and resize it
+    const image = await loadImage(imageUrl);
+    const canvas = createCanvas(224, 224);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0, 224, 224);
 
-    // Ensure embeddings directory exists
-    const embeddingsDir = path.dirname(embeddingOutput);
-    if (!fs.existsSync(embeddingsDir)) {
-      fs.mkdirSync(embeddingsDir, { recursive: true });
-    }
+    // Load MobileNet Model
+    const model = await mobilenet.load();
+    const tensor = tf.browser.fromPixels(canvas)
+      .resizeBilinear([224, 224])
+      .div(255.0) // Normalize
+      .expandDims(0);
 
-    // Activate virtual environment and execute Python script
-    const command = `
-      source "${path.join(projectRoot, 'sockmatch-venv/bin/activate')}" && \
-      python "${pipelineScript}" --input "${imageUrl}" --output "${embeddingOutput}"
-    `;
+    // Generate Embedding
+    const embedding = model.infer(tensor, "conv_preds").arraySync()[0];
 
-    await execPromise(command);
-
-    // Read embedding data
-    const embeddingData = JSON.parse(fs.readFileSync(embeddingOutput, 'utf8'));
-
-    // Respond with embedding data
-    res.status(200).json({ embedding: embeddingData.embedding });
-
+    // Respond with the embedding
+    res.status(200).json({ embedding });
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.error("Error processing image:", error);
+    res.status(500).json({ error: "Failed to process image." });
   }
 }

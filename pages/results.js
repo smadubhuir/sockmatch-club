@@ -15,28 +15,42 @@ export default function ResultsPage() {
   const { imageUrl } = router.query;
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const data = localStorage.getItem("sockUpload");
-    if (!data) {
+    if (!imageUrl) {
       setLoading(false);
       return;
     }
 
-    try {
-      const { imageUrl, matches } = JSON.parse(data);
-      const sortedMatches = matches
-        .filter((match) => !match.sold)
-        .sort((a, b) => b.similarity - a.similarity); // Sort by highest SockRank
+    const fetchMatches = async () => {
+      try {
+        // First, generate the embedding for the uploaded sock
+        const embeddingRes = await fetch("/api/process-sock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        });
 
-      setMatches(sortedMatches);
-    } catch (err) {
-      console.error("Error parsing sockUpload data:", err);
-      setError("Could not load matches.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        const { embedding } = await embeddingRes.json();
+        if (!embedding) throw new Error("Failed to generate embedding.");
+
+        // Fetch matching socks using the optimized API route
+        const matchRes = await fetch("/api/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ embedding }),
+        });
+
+        const { matches } = await matchRes.json();
+        setMatches(matches || []);
+      } catch (err) {
+        console.error("Error loading matches:", err);
+        setError("Failed to load matches.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatches();
+  }, [imageUrl]);
 
   const buySock = async (sockId) => {
     if (!session || !session.user) {

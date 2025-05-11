@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "../lib/supabaseClient";
+import { supabaseServer } from "@/lib/supabaseClient";
 
 export default function EditSockPage() {
   const [sock, setSock] = useState(null);

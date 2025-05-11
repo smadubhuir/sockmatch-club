@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
-import SockCard from "./SockCard";
+import SockCard from "@/components/SockCard";
 
 export default function BrowsePage() {
   const [matches, setMatches] = useState([]);
@@ -65,9 +65,10 @@ export default function BrowsePage() {
         <p className="text-red-500 text-lg">{error}</p>
       ) : matches.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-          {matches.map((sock, index) => (
-            <SockCard key={index} sock={sock} />
-          ))}
+          {matches.map((match, index) => (
+  <SockCard key={index} sock={match} />
+))}
+
         </div>
       ) : (
         <p className="text-gray-500 text-lg mt-6">No matching socks found yet. Try uploading another sock!</p>

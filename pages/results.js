@@ -25,7 +25,11 @@ export default function ResultsPage() {
 
     try {
       const { imageUrl, matches } = JSON.parse(data);
-      setMatches(matches.filter((match) => !match.sold)); // Only show unsold socks
+      const sortedMatches = matches
+        .filter((match) => !match.sold)
+        .sort((a, b) => b.similarity - a.similarity); // Sort by highest SockRank
+
+      setMatches(sortedMatches);
     } catch (err) {
       console.error("Error parsing sockUpload data:", err);
       setError("Could not load matches.");
@@ -108,7 +112,7 @@ export default function ResultsPage() {
                 className="w-32 mx-auto rounded mb-2"
               />
               <p className="font-bold">SockRank: {(match.similarity * 100).toFixed(2)}%</p>
-              <p className="text-sm">Sell Price: ${match.price_sell || "N/A"}</p>
+              <p className="text-sm">Sell Price: ${match.price_sell || "Make an Offer"}</p>
               <p className="text-sm">Buy Offer: ${match.buy_offer || "None"}</p>
 
               <div className="mt-2">

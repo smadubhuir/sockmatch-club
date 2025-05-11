@@ -1,3 +1,4 @@
+// /pages/upload.js
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ import OptimizedImage from "@/components/OptimizedImage";
 export default function UploadPage() {
   const [sockImage, setSockImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [price, setPrice] = useState("");
   const [toast, setToast] = useState(null);
   const router = useRouter();
 
@@ -26,12 +28,10 @@ export default function UploadPage() {
 
     try {
       setLoading(true);
-
       const file = document.querySelector("#sock-file").files[0];
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", "sockmatch_socks"); // Use the dedicated Cloudinary preset
-      formData.append("folder", "sockmatch/socks"); // Ensure images go to the right folder
+      formData.append("upload_preset", "sockmatch_socks");
 
       const res = await fetch("https://api.cloudinary.com/v1_1/dilhl61st/image/upload", {
         method: "POST",
@@ -39,35 +39,22 @@ export default function UploadPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(`Cloudinary Upload Error: ${data.error?.message || "Unknown error"}`);
-      }
+      if (!data.secure_url) throw new Error("Failed to upload image.");
 
-      if (data.secure_url) {
-        // Fetch the authenticated user correctly
-        const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("socks").insert({
+        image_url: data.secure_url,
+        price_sell: price ? parseFloat(price) : null,
+      });
 
-        if (!user) {
-          setToast("You must be logged in to upload.");
-          return;
-        }
+      if (error) throw error;
 
-        // Save the image URL to Supabase (or any other metadata)
-        const { error } = await supabase.from("socks").insert({
-          image_url: data.secure_url,
-          user_id: user.id,
-        });
-
-        if (error) throw error;
-
-        setToast("Sock uploaded successfully!");
-        setTimeout(() => router.push("/browse"), 1500);
-      } else {
-        throw new Error("Failed to upload image.");
-      }
+      setToast("Sock uploaded successfully!");
+      setTimeout(() => {
+        router.push(`/results?imageUrl=${data.secure_url}`);
+      }, 1000);
     } catch (err) {
       setToast("Failed to upload sock.");
-      console.error("Upload Error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -94,6 +81,14 @@ export default function UploadPage() {
           className="rounded-md mb-4"
         />
       )}
+
+      <input 
+        type="number" 
+        placeholder="Set Price (Optional)" 
+        value={price} 
+        onChange={(e) => setPrice(e.target.value)} 
+        className="mb-4 p-2 border rounded w-full"
+      />
 
       <button 
         onClick={handleUpload} 

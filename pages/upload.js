@@ -44,13 +44,15 @@ export default function UploadPage() {
       }
 
       if (data.secure_url) {
-        // Save the image URL to Supabase (or any other metadata)
-        const user = supabase.auth.user();
+        // Fetch the authenticated user correctly
+        const { data: { user } } = await supabase.auth.getUser();
+
         if (!user) {
           setToast("You must be logged in to upload.");
           return;
         }
 
+        // Save the image URL to Supabase (or any other metadata)
         const { error } = await supabase.from("socks").insert({
           image_url: data.secure_url,
           user_id: user.id,
